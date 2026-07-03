@@ -8,6 +8,7 @@ from textual import events, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.css.query import NoMatches
 from textual.theme import Theme
 from textual.widgets import (
     Button,
@@ -534,6 +535,12 @@ class SpotifyTUI(App):
         self.notify(f"No playlist named {name!r}", severity="error")
 
     def render_now_playing(self, status, volume) -> None:
+        try:
+            self._render_now_playing(status, volume)
+        except NoMatches:
+            pass  # widgets already unmounted (app shutting down)
+
+    def _render_now_playing(self, status, volume) -> None:
         # Track state/progress/track-change always update, even while the
         # card shows the artist face — only the panel text is skipped then.
         if status is not None:
@@ -647,7 +654,10 @@ class SpotifyTUI(App):
         widget.image = art  # type: ignore[attr-defined]
 
     def update_progress(self) -> None:
-        bar = self.query_one("#track-progress", ProgressBar)
+        try:
+            bar = self.query_one("#track-progress", ProgressBar)
+        except NoMatches:
+            return  # app shutting down
         if self.total:
             bar.update(total=self.total, progress=min(self.elapsed or 0, self.total))
         self.query_one("#time-elapsed", Static).update(format_seconds(self.elapsed))
