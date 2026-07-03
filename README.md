@@ -91,6 +91,11 @@ swift scripts/setup-audio.swift remove   # back to speakers + delete the device
 Re-running without arguments turns it back on. Or just pick any output in
 System Settings → Sound.
 
+**Automatic mode:** once the Multi-Out device exists, spotui switches to it
+on launch and restores your previous output on quit — you only run the
+setup script once, ever. Opt out with `{"auto_multiout": false}` in
+config.json.
+
 ## Keys
 
 | Key | Action |
@@ -124,6 +129,7 @@ artist NF` — opens the TUI and runs the action.
 | `visualizer_style` | `area` `bars` `mirror` `peaks` `outline` `dots` `led` `rain` | `area` |
 | `visualizer_colors` | `aurora` `synthwave` `matrix` `fire` `ocean` `mono` `sunset` `vaporwave` `rainbow` `ice` `lava` `candy` `gold` `cyberpunk` | `aurora` |
 | `art_renderer` | `auto` `sixel` `tgp` `halfcell` `unicode` | `auto` |
+| `auto_multiout` | `true` / `false` — switch to Multi-Out on launch, restore on quit | `true` |
 
 ## Development
 

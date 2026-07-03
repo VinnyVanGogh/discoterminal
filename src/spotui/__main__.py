@@ -9,11 +9,21 @@ Usage:
 
 import sys
 
+from spotui import audio
 from spotui.app import SpotifyTUI
 
 
 def main():
-    SpotifyTUI(startup_args=sys.argv[1:]).run()
+    try:
+        # Route audio through the Multi-Out (visualizer feed) while running.
+        restore = audio.enable_multiout()
+    except Exception:
+        restore = None
+    try:
+        SpotifyTUI(startup_args=sys.argv[1:]).run()
+    finally:
+        if restore is not None:
+            audio.restore_output(restore)
 
 
 if __name__ == "__main__":
