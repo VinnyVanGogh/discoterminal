@@ -9,15 +9,18 @@ Render styles (cycle in-app): bars, mirror, wave. Choice persists in
 ~/.config/spotify_player/config.json under "visualizer_style".
 """
 
+from __future__ import annotations
+
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 from textual.widgets import Static
 
-from spotui import webapi
+from spotwave import webapi
 
 BLOCKS = " ▁▂▃▄▅▆▇█"
 STYLES = ("area", "bars", "mirror", "peaks", "outline", "dots", "led", "rain")
@@ -69,8 +72,14 @@ source = "BlackHole 2ch"
 """
 
 
-def blackhole_present():
-    """True when the BlackHole loopback device is registered with CoreAudio."""
+def blackhole_present() -> bool:
+    """True when the BlackHole loopback device is registered with CoreAudio.
+
+    macOS only — Linux (PulseAudio monitor) and Windows (WASAPI loopback)
+    give cava system audio natively, no loopback driver needed.
+    """
+    if sys.platform != "darwin":
+        return False
     try:
         result = subprocess.run(
             ["system_profiler", "SPAudioDataType"],
@@ -81,7 +90,7 @@ def blackhole_present():
         return False
 
 
-def cava_available():
+def cava_available() -> bool:
     return shutil.which("cava") is not None
 
 
@@ -103,23 +112,23 @@ def _save_config_value(key, value):
     webapi.CONFIG_FILE.write_text(json.dumps(config, indent=2))
 
 
-def load_style():
+def load_style() -> str:
     return _load_config_value("visualizer_style", STYLES, STYLES[0])
 
 
-def save_style(style):
+def save_style(style: str) -> None:
     _save_config_value("visualizer_style", style)
 
 
-def load_palette():
+def load_palette() -> str:
     return _load_config_value("visualizer_colors", PALETTES, DEFAULT_PALETTE)
 
 
-def save_palette(name):
+def save_palette(name: str) -> None:
     _save_config_value("visualizer_colors", name)
 
 
-def _sample(values, width):
+def _sample(values: list[int], width: int) -> list[int]:
     """Resample values to exactly `width` columns."""
     if width <= 0 or not values:
         return []
@@ -127,7 +136,7 @@ def _sample(values, width):
     return [values[min(int(i * step), len(values) - 1)] for i in range(width)]
 
 
-def _cell(fill):
+def _cell(fill: float) -> str:
     """Block character for a cell that is `fill` (0..1+) covered from below."""
     if fill >= 1:
         return "█"
@@ -136,7 +145,7 @@ def _cell(fill):
     return BLOCKS[max(int(fill * 8), 1)]
 
 
-def _grid(levels, height, gap_every=0):
+def _grid(levels: list[float], height: int, gap_every: int = 0) -> list[list[str]]:
     """Bottom-up grid of block chars. levels are column heights in cells.
 
     Returns mutable rows (lists of chars), top row first. gap_every=3 leaves
@@ -155,7 +164,7 @@ def _grid(levels, height, gap_every=0):
     return rows
 
 
-def _colorize(rows, height, gradient):
+def _colorize(rows: list[list[str]], height: int, gradient: tuple[str, ...]) -> str:
     """Wrap each row in its gradient color; CAP markers become white caps."""
     top_index = len(gradient) - 1
     out = []

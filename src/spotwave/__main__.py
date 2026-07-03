@@ -1,16 +1,16 @@
-"""spotui entry point.
+"""spotwave entry point.
 
 Usage:
-    spotui                    # open the TUI
-    spotui next               # open the TUI and skip track
-    spotui <playlist name>    # open the TUI and play that playlist
-    spotui play artist NF     # any shpotify command as startup action
+    spotwave                    # open the TUI
+    spotwave next               # open the TUI and skip track
+    spotwave <playlist name>    # open the TUI and play that playlist
+    spotwave play artist NF     # any shpotify command as startup action
 """
 
 import sys
 
-from spotui import audio
-from spotui.app import SpotifyTUI
+from spotwave import audio
+from spotwave.app import SpotifyTUI
 
 
 def main():

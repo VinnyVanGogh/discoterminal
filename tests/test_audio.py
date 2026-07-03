@@ -1,4 +1,4 @@
-from spotui import audio
+from spotwave import audio
 
 
 def test_enable_returns_none_when_multiout_missing(monkeypatch):

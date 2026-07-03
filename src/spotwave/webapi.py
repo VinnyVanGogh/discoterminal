@@ -7,11 +7,13 @@ First call opens a browser for login; token cached afterwards. Scope
 changes invalidate the cache and trigger one more login.
 """
 
+from __future__ import annotations
+
 import json
 import os
 from pathlib import Path
 
-CONFIG_DIR = Path.home() / ".config" / "spotui"
+CONFIG_DIR = Path.home() / ".config" / "spotwave"
 _LEGACY_CONFIG_DIR = Path.home() / ".config" / "spotify_player"
 if not CONFIG_DIR.exists() and _LEGACY_CONFIG_DIR.exists():
     CONFIG_DIR = _LEGACY_CONFIG_DIR  # keep pre-rename setups working
@@ -33,7 +35,7 @@ SCOPE = " ".join(
 _client = None
 
 
-def _client_id():
+def _client_id() -> str | None:
     client_id = os.environ.get("SPOTIPY_CLIENT_ID") or os.environ.get(
         "SPOTIFY_CLIENT_ID"
     )
@@ -43,6 +45,16 @@ def _client_id():
         return json.loads(CONFIG_FILE.read_text()).get("client_id")
     except (OSError, json.JSONDecodeError, AttributeError):
         return None
+
+
+def configured() -> bool:
+    """True when a client ID is available (env var or config file)."""
+    return _client_id() is not None
+
+
+def current_playback():
+    """Full playback state (track, progress, device, shuffle/repeat) — one call."""
+    return get_client().current_playback()
 
 
 def get_client():
@@ -71,10 +83,14 @@ def get_client():
         open_browser=True,
     )
     _client = spotipy.Spotify(auth_manager=auth)
+    try:
+        TOKEN_CACHE.chmod(0o600)  # cached OAuth token is a credential
+    except OSError:
+        pass
     return _client
 
 
-def all_playlists():
+def all_playlists() -> dict[str, str]:
     """dict of name -> uri for every playlist of the user."""
     sp = get_client()
     playlists = {}
@@ -87,7 +103,7 @@ def all_playlists():
     return playlists
 
 
-def search(query, limit=8):
+def search(query: str, limit: int = 8) -> list[dict[str, str]]:
     """Mixed search. Returns [{'label': str, 'uri': str}], tracks first."""
     sp = get_client()
     response = sp.search(q=query, limit=limit, type="track,album,playlist,artist")
@@ -115,7 +131,7 @@ def search(query, limit=8):
     return results
 
 
-def current_track():
+def current_track() -> dict[str, str | None] | None:
     """Currently playing track or None."""
     sp = get_client()
     playing = sp.current_user_playing_track()
@@ -132,7 +148,7 @@ def current_track():
     }
 
 
-def current_artist_info():
+def current_artist_info() -> dict[str, object] | None:
     """Profile of the primary artist of the current track, or None."""
     sp = get_client()
     playing = sp.current_user_playing_track()
@@ -158,13 +174,13 @@ def current_artist_info():
     }
 
 
-def is_saved(track_id):
+def is_saved(track_id: str) -> bool:
     sp = get_client()
     result = sp.current_user_saved_tracks_contains([track_id])
     return bool(result and result[0])
 
 
-def toggle_saved(track_id):
+def toggle_saved(track_id: str) -> bool:
     """Flip Liked Songs membership. Returns the new saved state."""
     sp = get_client()
     if is_saved(track_id):
@@ -174,7 +190,7 @@ def toggle_saved(track_id):
     return True
 
 
-def devices():
+def devices() -> list[dict[str, object]]:
     """[{'id', 'name', 'type', 'is_active'}] of available playback devices."""
     sp = get_client()
     return [
@@ -189,11 +205,11 @@ def devices():
     ]
 
 
-def transfer(device_id):
+def transfer(device_id: str) -> None:
     get_client().transfer_playback(device_id, force_play=True)
 
 
-def queue():
+def queue() -> list[dict[str, str]]:
     """Upcoming tracks in the play queue: [{'label', 'uri'}]."""
     sp = get_client()
     items = []
@@ -207,12 +223,12 @@ def queue():
     return items
 
 
-def seek(seconds):
+def seek(seconds: float) -> None:
     """Jump to a position (seconds) in the current track."""
     get_client().seek_track(int(seconds * 1000))
 
 
-def play(uri):
+def play(uri: str) -> None:
     """Start playback of a URI via the Web API — no app focus stealing.
 
     Tracks play directly; albums/playlists/artists play as context.

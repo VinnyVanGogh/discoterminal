@@ -1,5 +1,5 @@
-from spotui.app import format_seconds, parse_position
-from spotui.spotify import ANSI_ESCAPE, parse_status
+from spotwave.app import format_seconds, parse_position
+from spotwave.spotify import ANSI_ESCAPE, parse_status
 
 
 def test_parse_position():

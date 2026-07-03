@@ -1,0 +1,3 @@
+"""spotwave — a Spotify terminal UI with album art, audio visualizer, and theming."""
+
+__version__ = "0.1.0"

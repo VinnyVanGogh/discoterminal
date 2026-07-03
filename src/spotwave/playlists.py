@@ -4,10 +4,12 @@ Primary: Spotify Web API (see webapi.py).
 Fallback: local playlists.json next to this file, seeded with PRESETS.
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
-from spotui import webapi
+from spotwave import webapi
 
 LOCAL_FILE = Path(__file__).parent / "playlists.json"
 
@@ -18,7 +20,7 @@ PRESETS = {
 }
 
 
-def load_local():
+def load_local() -> dict[str, str]:
     """Playlists from playlists.json, else the built-in presets."""
     try:
         data = json.loads(LOCAL_FILE.read_text())
@@ -29,7 +31,7 @@ def load_local():
     return dict(PRESETS)
 
 
-def get_playlists():
+def get_playlists() -> tuple[dict[str, str], str, str | None]:
     """Returns (playlists, source, error) where source is 'spotify' or 'local'."""
     try:
         playlists = webapi.all_playlists()

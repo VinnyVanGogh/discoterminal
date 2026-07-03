@@ -21,9 +21,25 @@ from textual.widgets import (
     Static,
 )
 
-from spotui import lyrics, playlists, spotify, webapi
-from spotui.screens import LyricsScreen, PickerScreen
-from spotui.visualizer import PALETTES, CavaVisualizer
+from spotwave import lyrics, player, playlists, spotify, webapi
+from spotwave.screens import LyricsScreen, PickerScreen
+from spotwave.visualizer import PALETTES, CavaVisualizer
+
+SETUP_TEXT = """\
+[bold]👋 Welcome to spotwave — one-time setup[/bold]
+
+No Spotify credentials found. To connect your account:
+
+[bold]1.[/bold] Create an app at [u]developer.spotify.com/dashboard[/u]
+   (Web API checkbox greyed out? Create the app without it,
+    then Edit the app and add Web API there.)
+[bold]2.[/bold] Add redirect URI: [u]http://127.0.0.1:8888/callback[/u]
+[bold]3.[/bold] Put your Client ID in [u]~/.config/spotwave/config.json[/u]:
+   {"client_id": "your-client-id"}
+[bold]4.[/bold] Restart spotwave — a browser opens once to log in.
+
+[dim]macOS: `brew install shpotify` also enables local control
+without any of the above (playlists/search still need the API).[/dim]"""
 
 
 def _palette_theme(name, colors):
@@ -68,7 +84,7 @@ def _art_widget_class():
 try:
     from PIL import Image as PILImage
 except ImportError:
-    PILImage = None
+    PILImage = None  # type: ignore[assignment]
 
 AlbumArt = _art_widget_class()
 
@@ -228,6 +244,7 @@ class SpotifyTUI(App):
         self.track_id = None  # Spotify ID of current track
         self.saved = None  # True/False/None(unknown) — Liked Songs state
         self.card_face = "playing"  # "playing" | "artist" — card flip state
+        self.needs_setup = False  # true when no credentials and no local CLI
         self.palette_name = "aurora"  # synced with visualizer palette on mount
         self._track_art = None  # PIL image of current track's cover
         self._artist_cache = {}  # artist id -> (info dict, PIL image)
@@ -269,6 +286,15 @@ class SpotifyTUI(App):
         for name, colors in PALETTES.items():
             self.register_theme(_palette_theme(name, colors))
         self.apply_palette(self.query_one("#viz", CavaVisualizer).palette_name)
+
+        # First run: Web API backend selected but no credentials — show
+        # the setup checklist instead of polling into "unreachable".
+        backend = player.get_backend()
+        if backend.name == "webapi" and not webapi.configured():
+            self.needs_setup = True
+            self.query_one("#now-playing", Static).update(SETUP_TEXT)
+            return
+
         self.set_interval(STATUS_POLL_SECONDS, self.refresh_status)
         self.set_interval(1.0, self.tick_position)
         self.refresh_status()
@@ -279,9 +305,18 @@ class SpotifyTUI(App):
     def on_resize(self, event) -> None:
         self.set_class(event.size.width < NARROW_WIDTH, "narrow")
 
-    def dispatch_startup(self, args):
-        if args[0] in PASSTHROUGH_COMMANDS:
-            self.run_spotify(*args)
+    def dispatch_startup(self, args: list[str]) -> None:
+        head = args[0]
+        if head in player.ACTIONS:
+            self.run_player(head)
+        elif head in PASSTHROUGH_COMMANDS:
+            if player.get_backend().name == "shpotify":
+                self.run_spotify(*args)
+            else:
+                self.notify(
+                    f"Startup command {head!r} needs shpotify (macOS)",
+                    severity="warning",
+                )
         else:
             # Playlist name — played once the sidebar has loaded.
             self.pending_playlist = " ".join(args)
@@ -296,12 +331,24 @@ class SpotifyTUI(App):
 
     @work(thread=True, exclusive=True, group="status")
     def refresh_status(self) -> None:
-        status = spotify.get_status()
-        volume = spotify.get_volume()
+        if self.needs_setup:
+            return
+        status = player.get_backend().status()
+        volume = status.pop("volume", None) if status else None
         self.call_from_thread(self.render_now_playing, status, volume)
 
     @work(thread=True, group="commands")
+    def run_player(self, action: str) -> None:
+        """Run a standard playback action on the active backend."""
+        try:
+            player.get_backend().command(action)
+        except Exception as e:
+            self.call_from_thread(self.notify, str(e), severity="error")
+        self.call_from_thread(self.refresh_status)
+
+    @work(thread=True, group="commands")
     def run_spotify(self, *args) -> None:
+        """Raw shpotify passthrough (macOS only) — used by startup args."""
         result = spotify.run(*args)
         if not result.ok:
             self.call_from_thread(
@@ -401,8 +448,9 @@ class SpotifyTUI(App):
         try:
             webapi.seek(seconds)
         except Exception:
-            result = spotify.run("pos", str(int(seconds)))
-            if not result.ok:
+            try:
+                player.get_backend().seek(seconds)
+            except Exception:
                 self.call_from_thread(self.notify, "Seek failed", severity="error")
                 return
         self.elapsed = int(seconds)
@@ -596,7 +644,7 @@ class SpotifyTUI(App):
         if widget.size.width == 0 and retries > 0:
             self.set_timer(0.5, lambda: self._set_art(art, retries - 1))
             return
-        widget.image = art
+        widget.image = art  # type: ignore[attr-defined]
 
     def update_progress(self) -> None:
         bar = self.query_one("#track-progress", ProgressBar)
@@ -633,14 +681,17 @@ class SpotifyTUI(App):
     def _play_uri_worker(self, uri) -> None:
         try:
             webapi.play(uri)  # Web API: keeps focus on the terminal
-        except Exception:
-            # No active device / API hiccup — shpotify can wake Spotify up
-            # (this path may briefly focus the Spotify app).
-            result = spotify.run("play", "uri", uri)
-            if not result.ok:
-                self.call_from_thread(
-                    self.notify, result.output or "play failed", severity="error"
-                )
+        except Exception as e:
+            if player.get_backend().name == "shpotify":
+                # No active device / API hiccup — shpotify can wake Spotify
+                # up (this path may briefly focus the Spotify app).
+                result = spotify.run("play", "uri", uri)
+                if not result.ok:
+                    self.call_from_thread(
+                        self.notify, result.output or "play failed", severity="error"
+                    )
+            else:
+                self.call_from_thread(self.notify, str(e), severity="error")
         self.call_from_thread(self.refresh_status)
 
     def transfer_device(self, device_id) -> None:
@@ -649,28 +700,28 @@ class SpotifyTUI(App):
     # ---- actions ----------------------------------------------------------
 
     def action_play_pause(self) -> None:
-        self.run_spotify("pause" if self.last_state == "playing" else "play")
+        self.run_player("pause" if self.last_state == "playing" else "play")
 
     def action_next(self) -> None:
-        self.run_spotify("next")
+        self.run_player("next")
 
     def action_prev(self) -> None:
-        self.run_spotify("prev")
+        self.run_player("prev")
 
     def action_replay(self) -> None:
-        self.run_spotify("replay")
+        self.run_player("replay")
 
     def action_vol_up(self) -> None:
-        self.run_spotify("vol", "up")
+        self.run_player("vol_up")
 
     def action_vol_down(self) -> None:
-        self.run_spotify("vol", "down")
+        self.run_player("vol_down")
 
     def action_shuffle(self) -> None:
-        self.run_spotify("toggle", "shuffle")
+        self.run_player("shuffle")
 
     def action_repeat(self) -> None:
-        self.run_spotify("toggle", "repeat")
+        self.run_player("repeat")
 
     def action_like(self) -> None:
         self.toggle_like()
@@ -687,7 +738,7 @@ class SpotifyTUI(App):
         viz.display = not viz.display
 
     def action_viz_style(self) -> None:
-        from spotui.visualizer import STYLES
+        from spotwave.visualizer import STYLES
 
         viz = self.query_one("#viz", CavaVisualizer)
         options = [
@@ -701,7 +752,7 @@ class SpotifyTUI(App):
         self.show_picker("Visualizer style", options, apply)
 
     def action_viz_colors(self) -> None:
-        from spotui.visualizer import PALETTES
+        from spotwave.visualizer import PALETTES
 
         viz = self.query_one("#viz", CavaVisualizer)
         options = []

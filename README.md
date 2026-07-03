@@ -1,15 +1,24 @@
-# spotui
+# spotwave
 
-A Spotify terminal UI for macOS. Album art in your terminal, a real-time audio
+A Spotify terminal UI. Album art in your terminal, a real-time audio
 visualizer powered by [cava], full-app color theming, lyrics, and playback
 control — without leaving your shell or focusing the Spotify window.
 
 <!-- TODO: demo GIF — record with `vhs` or asciinema, drop here -->
 <!-- ![demo](docs/demo.gif) -->
 
-Built with [Textual]. Talks to Spotify two ways: the [shpotify] CLI
-(AppleScript) for instant local control, and the Spotify Web API (OAuth PKCE)
-for your library, search, devices, and queue.
+Built with [Textual]. Playback control picks the best backend for your
+platform automatically:
+
+| Platform | Local control | Visualizer audio |
+|----------|--------------|------------------|
+| macOS | [shpotify] (AppleScript) | BlackHole loopback (setup script included) |
+| Linux | [playerctl] (MPRIS) | PulseAudio/PipeWire monitor — works out of the box |
+| Windows *(experimental)* | Spotify Web API | cava's native WASAPI loopback |
+
+The Spotify Web API (OAuth PKCE) powers your library, search, devices, queue,
+and is the universal control fallback. Override backend selection with
+`{"backend": "shpotify" | "playerctl" | "webapi"}` in config.
 
 ## Features
 
@@ -33,15 +42,33 @@ for your library, search, devices, and queue.
 
 ## Install
 
+macOS:
+
 ```sh
 brew install shpotify cava            # local control + visualizer
-pipx install spotui                   # or: pip install spotui
-spotui
+pipx install spotwave                 # or: pip install spotwave
+spotwave
 ```
 
-Requires macOS, Python 3.11+, the Spotify desktop app, and a Spotify Premium
-account (a Feb 2026 Spotify policy requires Premium for Web-API dev-mode
-apps).
+Linux:
+
+```sh
+sudo apt install playerctl cava       # or your distro's equivalent
+pipx install spotwave
+spotwave
+```
+
+Windows (experimental — [testers wanted](../../issues)):
+
+```powershell
+pip install spotwave                  # control goes through the Web API
+spotwave                              # cava optional; needs a sixel-capable terminal
+```
+
+Requires Python 3.11+ and the Spotify desktop app. The Web API features
+(playlists, search, queue, lyrics card, artist info) need a Premium account —
+a Feb 2026 Spotify policy requires Premium for Web-API dev-mode apps. Local
+playback control via shpotify/playerctl works without Premium.
 
 ## Spotify API setup (one time)
 
@@ -50,7 +77,7 @@ apps).
      dashboard bug): create the app *without* it, then Edit the app and add
      Web API there — it won't be greyed out on edit.
 2. Add redirect URI: `http://127.0.0.1:8888/callback`
-3. Copy the **Client ID** into `~/.config/spotui/config.json`:
+3. Copy the **Client ID** into `~/.config/spotwave/config.json`:
 
    ```json
    { "client_id": "your-client-id-here" }
@@ -59,9 +86,12 @@ apps).
    (or `export SPOTIPY_CLIENT_ID=...`)
 
 4. First launch opens a browser to log in once; the token is cached after.
-   No client secret needed — spotui uses the PKCE flow.
+   No client secret needed — spotwave uses the PKCE flow.
 
-## Visualizer audio setup (optional)
+## Visualizer audio setup (macOS only, optional)
+
+Linux and Windows: nothing to do — cava captures system audio natively
+(PulseAudio/PipeWire monitor, WASAPI loopback).
 
 macOS has no built-in way for apps to hear system output, so cava needs a
 loopback device:
@@ -73,12 +103,12 @@ swift scripts/setup-audio.swift      # create + activate a Multi-Output device
 ```
 
 The script builds a "Spotify TUI Multi-Out" device (your speakers +
-BlackHole) via CoreAudio and switches the system output to it. spotui
+BlackHole) via CoreAudio and switches the system output to it. spotwave
 auto-detects BlackHole and points cava at it. Skip all this and the
 visualizer simply shows a hint instead.
 
 > Note: with a Multi-Output device active, macOS volume keys are disabled
-> (aggregate-device limitation). Use spotui's `+`/`-` — they control
+> (aggregate-device limitation). Use spotwave's `+`/`-` — they control
 > Spotify's own volume.
 
 Turn it off / undo:
@@ -91,7 +121,7 @@ swift scripts/setup-audio.swift remove   # back to speakers + delete the device
 Re-running without arguments turns it back on. Or just pick any output in
 System Settings → Sound.
 
-**Automatic mode:** once the Multi-Out device exists, spotui switches to it
+**Automatic mode:** once the Multi-Out device exists, spotwave switches to it
 on launch and restores your previous output on quit — you only run the
 setup script once, ever. Opt out with `{"auto_multiout": false}` in
 config.json.
@@ -116,12 +146,12 @@ config.json.
 | click progress bar | Seek |
 | `q` | Quit |
 
-Startup arguments: `spotui next`, `spotui <playlist name>`, `spotui play
+Startup arguments: `spotwave next`, `spotwave <playlist name>`, `spotwave play
 artist NF` — opens the TUI and runs the action.
 
 ## Config reference
 
-`~/.config/spotui/config.json`:
+`~/.config/spotwave/config.json`:
 
 | Key | Values | Default |
 |-----|--------|---------|
@@ -129,7 +159,8 @@ artist NF` — opens the TUI and runs the action.
 | `visualizer_style` | `area` `bars` `mirror` `peaks` `outline` `dots` `led` `rain` | `area` |
 | `visualizer_colors` | `aurora` `synthwave` `matrix` `fire` `ocean` `mono` `sunset` `vaporwave` `rainbow` `ice` `lava` `candy` `gold` `cyberpunk` | `aurora` |
 | `art_renderer` | `auto` `sixel` `tgp` `halfcell` `unicode` | `auto` |
-| `auto_multiout` | `true` / `false` — switch to Multi-Out on launch, restore on quit | `true` |
+| `auto_multiout` | `true` / `false` — switch to Multi-Out on launch, restore on quit (macOS) | `true` |
+| `backend` | `shpotify` `playerctl` `webapi` — override auto-selection | auto |
 
 ## Development
 
@@ -137,10 +168,11 @@ artist NF` — opens the TUI and runs the action.
 pip install -e ".[dev]"
 pytest
 ruff check src tests
+mypy src
 ```
 
 Tests run headless with mocked Spotify backends — no account or audio setup
-needed.
+needed. CI covers Linux, macOS, and Windows.
 
 ## License
 
@@ -149,5 +181,6 @@ MIT
 [cava]: https://github.com/karlstav/cava
 [Textual]: https://textual.textualize.io
 [shpotify]: https://github.com/hnarayanan/shpotify
+[playerctl]: https://github.com/altdesktop/playerctl
 [lrclib.net]: https://lrclib.net
 [Spotify developer dashboard]: https://developer.spotify.com/dashboard

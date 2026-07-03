@@ -1,6 +1,6 @@
 import pytest
 
-from spotui import spotify, visualizer, webapi
+from spotwave import player, spotify, visualizer, webapi
 
 
 @pytest.fixture
@@ -54,6 +54,11 @@ def calls(monkeypatch):
         lambda: {"id": "a1", "name": "NF", "genres": ["rap"], "followers": 1000,
                  "popularity": 80, "image_url": None, "top_tracks": ["MOTTO"]},
     )
+
+    # Force the shpotify backend everywhere (its CLI calls are mocked above),
+    # so tests behave identically on macOS and CI runners.
+    monkeypatch.setattr(player, "_active", player.ShpotifyBackend())
+    monkeypatch.setattr(webapi, "configured", lambda: True)
 
     monkeypatch.setattr(visualizer, "save_style", lambda s: None)
     monkeypatch.setattr(visualizer, "save_palette", lambda s: None)

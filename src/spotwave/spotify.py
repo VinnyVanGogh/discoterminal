@@ -1,5 +1,7 @@
 """Thin wrapper around the shpotify CLI (`spotify` on PATH)."""
 
+from __future__ import annotations
+
 import re
 import subprocess
 
@@ -7,12 +9,12 @@ ANSI_ESCAPE = re.compile(r"\x1b(?:\[[0-9;]*[A-Za-z]|\(B)")
 
 
 class SpotifyResult:
-    def __init__(self, ok, output):
+    def __init__(self, ok: bool, output: str) -> None:
         self.ok = ok
         self.output = output
 
 
-def run(command, *args):
+def run(command: str, *args: str) -> SpotifyResult:
     """Run `spotify <command> [args...]`. Never raises."""
     cmd = ["spotify", command, *args]
     try:
@@ -28,7 +30,7 @@ def run(command, *args):
 STATUS_FIELDS = ("Artist", "Album", "Track", "Position", "Shuffle", "Repeat")
 
 
-def get_status():
+def get_status() -> dict[str, str] | None:
     """Parse `spotify status` output into a dict, or None on failure.
 
     shpotify emits lines like `Artist: NF` plus a first line such as
@@ -41,7 +43,7 @@ def get_status():
     return parse_status(result.output)
 
 
-def parse_status(output):
+def parse_status(output: str) -> dict[str, str] | None:
 
     status = {}
     for line in output.splitlines():
@@ -59,7 +61,7 @@ def parse_status(output):
     return status or None
 
 
-def get_volume():
+def get_volume() -> int | None:
     """Current volume 0-100 as int, or None. shpotify prints e.g.
     `Current Spotify volume level is 66.`"""
     result = run("vol")

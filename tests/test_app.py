@@ -1,8 +1,8 @@
 from textual.widgets import Input, ListView
 
-from spotui.app import SpotifyTUI
-from spotui.screens import PickerScreen
-from spotui.visualizer import PALETTES
+from spotwave.app import SpotifyTUI
+from spotwave.screens import PickerScreen
+from spotwave.visualizer import PALETTES
 
 
 async def test_now_playing_renders(calls):
@@ -110,7 +110,7 @@ async def test_seek_worker_uses_web_api(calls):
 
 
 async def test_like_toggles(calls):
-    import spotui.webapi as webapi
+    import spotwave.webapi as webapi
 
     webapi.toggle_saved = lambda tid: False
     app = SpotifyTUI()

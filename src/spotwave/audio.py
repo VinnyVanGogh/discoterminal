@@ -8,18 +8,26 @@ only switches between existing devices.
 Set {"auto_multiout": false} in config.json to opt out.
 """
 
+from __future__ import annotations
+
 import ctypes
 import ctypes.util
 import json
+import sys
 
-from spotui import webapi
+from spotwave import webapi
 
 MULTIOUT_UID = "com.spotify-tui.multi-out"
 
-try:
-    _core = ctypes.CDLL(ctypes.util.find_library("CoreAudio"))
-    _cf = ctypes.CDLL(ctypes.util.find_library("CoreFoundation"))
-except (OSError, TypeError):  # not macOS
+_core: ctypes.CDLL | None
+_cf: ctypes.CDLL | None
+if sys.platform == "darwin":
+    try:
+        _core = ctypes.CDLL(ctypes.util.find_library("CoreAudio"))
+        _cf = ctypes.CDLL(ctypes.util.find_library("CoreFoundation"))
+    except (OSError, TypeError):
+        _core = _cf = None
+else:  # Linux/Windows need no output switching for the visualizer
     _core = _cf = None
 
 _SYSTEM_OBJECT = 1
@@ -27,7 +35,7 @@ _ELEMENT_MAIN = 0
 _UTF8 = 0x08000100
 
 
-def _fourcc(code):
+def _fourcc(code: str) -> int:
     return int.from_bytes(code.encode("ascii"), "big")
 
 
@@ -39,11 +47,12 @@ class _PropertyAddress(ctypes.Structure):
     ]
 
 
-def _address(selector):
+def _address(selector: str) -> _PropertyAddress:
     return _PropertyAddress(_fourcc(selector), _fourcc("glob"), _ELEMENT_MAIN)
 
 
 def _get_data(object_id, selector, buffer):
+    assert _core is not None
     address = _address(selector)
     size = ctypes.c_uint32(ctypes.sizeof(buffer))
     status = _core.AudioObjectGetPropertyData(
@@ -54,14 +63,15 @@ def _get_data(object_id, selector, buffer):
         raise OSError(f"CoreAudio error {status} reading {selector!r}")
 
 
-def default_output():
+def default_output() -> int:
     """AudioDeviceID of the current default output device."""
     device = ctypes.c_uint32(0)
     _get_data(_SYSTEM_OBJECT, "dOut", device)
     return device.value
 
 
-def set_default_output(device_id):
+def set_default_output(device_id: int) -> None:
+    assert _core is not None
     address = _address("dOut")
     device = ctypes.c_uint32(device_id)
     status = _core.AudioObjectSetPropertyData(
@@ -72,7 +82,8 @@ def set_default_output(device_id):
         raise OSError(f"CoreAudio error {status} setting default output")
 
 
-def _all_devices():
+def _all_devices() -> list[int]:
+    assert _core is not None
     address = _address("dev#")
     size = ctypes.c_uint32(0)
     if _core.AudioObjectGetPropertyDataSize(
@@ -88,7 +99,8 @@ def _all_devices():
     return list(devices)
 
 
-def device_uid(device_id):
+def device_uid(device_id: int) -> str:
+    assert _cf is not None
     ref = ctypes.c_void_p(0)
     try:
         _get_data(device_id, "uid ", ref)
@@ -102,22 +114,22 @@ def device_uid(device_id):
     return buffer.value.decode("utf-8", "replace")
 
 
-def find_device(uid):
+def find_device(uid: str) -> int | None:
     for device in _all_devices():
         if device_uid(device) == uid:
             return device
     return None
 
 
-def _auto_enabled():
+def _auto_enabled() -> bool:
     try:
         return json.loads(webapi.CONFIG_FILE.read_text()).get("auto_multiout", True)
     except (OSError, ValueError):
         return True
 
 
-def enable_multiout():
-    """Make the spotui Multi-Out the default output.
+def enable_multiout() -> int | None:
+    """Make the spotwave Multi-Out the default output.
 
     Returns the previous default device id (for restore_output), or None
     when nothing changed: not macOS, opted out, device not set up, or
@@ -135,7 +147,7 @@ def enable_multiout():
     return previous
 
 
-def restore_output(device_id):
+def restore_output(device_id: int) -> None:
     """Best-effort restore of a previously saved default output."""
     if _core is None:
         return
