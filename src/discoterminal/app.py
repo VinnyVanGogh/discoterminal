@@ -23,7 +23,7 @@ from textual.widgets import (
 )
 
 from discoterminal import lyrics, player, playlists, spotify, webapi
-from discoterminal.screens import LyricsScreen, PickerScreen
+from discoterminal.screens import PickerScreen
 from discoterminal.visualizer import PALETTES, CavaVisualizer
 
 SETUP_TEXT = """\
@@ -227,7 +227,7 @@ class SpotifyTUI(App):
         Binding("c", "viz_colors", "🎨 Colors"),
         Binding("i", "flip_card", "Artist info"),
         Binding("u", "show_queue", "Queue"),
-        Binding("y", "show_lyrics", "Lyrics"),
+        Binding("y", "show_lyrics_card", "Lyrics"),
         Binding("slash", "focus_search", "Search"),
         Binding("escape", "blur_search", show=False),
         Binding("q", "quit", "Quit"),
@@ -244,7 +244,11 @@ class SpotifyTUI(App):
         self.track_key = None  # (artist, track) for change detection
         self.track_id = None  # Spotify ID of current track
         self.saved = None  # True/False/None(unknown) — Liked Songs state
-        self.card_face = "playing"  # "playing" | "artist" — card flip state
+        self.card_face = "playing"  # "playing" | "artist" | "lyrics"
+        self.lyrics_synced = None  # [(seconds, line)] for the current track
+        self.lyrics_plain = None  # plain-text fallback
+        self.lyrics_for_key = None  # (artist, track) the lyrics belong to
+        self._lyrics_index = None  # last rendered synced-line index
         self.needs_setup = False  # true when no credentials and no local CLI
         self.palette_name = "aurora"  # synced with visualizer palette on mount
         self._track_art = None  # PIL image of current track's cover
@@ -430,19 +434,16 @@ class SpotifyTUI(App):
             self.call_from_thread(self.notify, "Nothing playing", severity="warning")
             return
         try:
-            text = lyrics.get_lyrics(artist, track, self.total)
+            synced, plain = lyrics.get_synced(artist, track, self.total)
         except Exception as e:
             self.call_from_thread(self.notify, f"Lyrics lookup failed: {e}",
                                   severity="error")
             return
-        if not text:
-            self.call_from_thread(
-                self.notify, f"No lyrics found for {track}", severity="warning"
-            )
-            return
-        self.call_from_thread(
-            self.push_screen, LyricsScreen(f"🎵 {artist} — {track}", text)
-        )
+        self.lyrics_synced = synced
+        self.lyrics_plain = plain
+        self.lyrics_for_key = (artist, track)
+        self._lyrics_index = None
+        self.call_from_thread(self.render_lyrics_card)
 
     @work(thread=True, exclusive=True, group="seek")
     def seek_to(self, seconds) -> None:
@@ -556,8 +557,11 @@ class SpotifyTUI(App):
                 self.sync_track_details()
                 if self.card_face == "artist":
                     self.load_artist_info()
+                elif self.card_face == "lyrics":
+                    self.query_one("#now-playing", Static).update("Loading lyrics…")
+                    self.load_lyrics()
 
-        if self.card_face == "artist":
+        if self.card_face != "playing":
             return
 
         panel = self.query_one("#now-playing", Static)
@@ -626,17 +630,75 @@ class SpotifyTUI(App):
         self._set_art(image, retries=6)
 
     def action_flip_card(self) -> None:
-        button = self.query_one("#btn-flip", Button)
-        if self.card_face == "playing":
+        if self.card_face == "artist":
+            self._show_playing_face()
+        else:
             self.card_face = "artist"
-            button.label = "🎵 playing"
+            self.query_one("#btn-flip", Button).label = "🎵 playing"
             self.query_one("#now-playing", Static).update("Loading artist info…")
             self.load_artist_info()
+
+    def action_show_lyrics_card(self) -> None:
+        if self.card_face == "lyrics":
+            self._show_playing_face()
+            return
+        self.card_face = "lyrics"
+        self.query_one("#btn-flip", Button).label = "🎵 playing"
+        if self.lyrics_for_key == self.track_key and (
+            self.lyrics_synced or self.lyrics_plain
+        ):
+            self.render_lyrics_card()
         else:
-            self.card_face = "playing"
-            button.label = "ℹ artist"
-            self._set_art(self._track_art, retries=6)
-            self.refresh_status()
+            self.query_one("#now-playing", Static).update("Loading lyrics…")
+            self.load_lyrics()
+
+    def _show_playing_face(self) -> None:
+        self.card_face = "playing"
+        self.query_one("#btn-flip", Button).label = "ℹ artist"
+        self._set_art(self._track_art, retries=6)
+        self.refresh_status()
+
+    def render_lyrics_card(self) -> None:
+        if self.card_face != "lyrics":
+            return
+        panel = self.query_one("#now-playing", Static)
+        colors = PALETTES[self.palette_name]
+        artist, track = self.track_key or ("", "")
+
+        if self.lyrics_synced:
+            index = self._current_lyric_index()
+            self._lyrics_index = index
+            window = 11  # lines shown
+            lines = [f"[bold {colors[4]}]🎤 {track}[/bold {colors[4]}]\n"]
+            start = max((index or 0) - 3, 0)
+            for i in range(start, min(start + window, len(self.lyrics_synced))):
+                _stamp, text = self.lyrics_synced[i]
+                text = text or "♪"
+                if i == index:
+                    lines.append(f"[bold {colors[2]}]▶ {text}[/bold {colors[2]}]")
+                else:
+                    lines.append(f"[dim]  {text}[/dim]")
+            panel.update("\n".join(lines))
+        elif self.lyrics_plain:
+            body = "\n".join(self.lyrics_plain.splitlines()[:11])
+            panel.update(
+                f"[bold {colors[4]}]🎤 {track}[/bold {colors[4]}] "
+                f"[dim](no sync available)[/dim]\n\n{body}"
+            )
+        else:
+            panel.update(f"[dim]No lyrics found for {track}[/dim]")
+
+    def _current_lyric_index(self) -> int | None:
+        """Index of the synced line matching the playback position."""
+        if not self.lyrics_synced or self.elapsed is None:
+            return None
+        index = None
+        for i, (stamp, _text) in enumerate(self.lyrics_synced):
+            if stamp <= self.elapsed:
+                index = i
+            else:
+                break
+        return index
 
     def _set_art(self, art, retries=0) -> None:
         """Apply album art, retrying while the widget hasn't been laid out yet.
@@ -667,6 +729,12 @@ class SpotifyTUI(App):
         if self.last_state == "playing" and self.elapsed is not None and self.total:
             self.elapsed = min(self.elapsed + 1, self.total)
             self.update_progress()
+            if (
+                self.card_face == "lyrics"
+                and self.lyrics_synced
+                and self._current_lyric_index() != self._lyrics_index
+            ):
+                self.render_lyrics_card()
 
     def show_picker(self, title, options, on_pick) -> None:
         def handle(value):
@@ -783,9 +851,6 @@ class SpotifyTUI(App):
 
     def action_show_queue(self) -> None:
         self.load_queue()
-
-    def action_show_lyrics(self) -> None:
-        self.load_lyrics()
 
     def action_focus_search(self) -> None:
         self.query_one("#search", Input).focus()

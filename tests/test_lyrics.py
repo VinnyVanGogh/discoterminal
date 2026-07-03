@@ -55,3 +55,11 @@ def test_duration_param_stringified(monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", capture)
     lyrics.get_lyrics("NF", "MOTTO", duration=163.7)
     assert "duration=163" in seen["url"]
+
+
+def test_parse_synced():
+    from discoterminal.lyrics import parse_synced
+
+    text = "[00:12.50] First line\n[01:05] Second line\nnot a lyric line\n[00:03.1] Early line"
+    lines = parse_synced(text)
+    assert lines == [(3.1, "Early line"), (12.5, "First line"), (65.0, "Second line")]
