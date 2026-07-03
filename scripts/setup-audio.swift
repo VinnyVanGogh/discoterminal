@@ -67,6 +67,30 @@ func setDefaultOutput(_ id: AudioDeviceID) -> Bool {
 
 let devices = getDevices()
 
+// Modes:
+//   swift setup-audio.swift          create Multi-Out + make it default
+//   swift setup-audio.swift off      switch default output back to speakers
+//   swift setup-audio.swift remove   off + delete the Multi-Out device
+let mode = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "setup"
+
+if mode == "off" || mode == "remove" {
+    guard let speakers = devices.first(where: { getString($0, kAudioDevicePropertyDeviceUID) == "BuiltInSpeakerDevice" }) else {
+        print("ERROR: built-in speakers not found — pick an output in Sound settings")
+        exit(1)
+    }
+    let ok = setDefaultOutput(speakers)
+    print("default output: MacBook Pro Speakers (\(ok ? "ok" : "FAILED"))")
+    if mode == "remove" {
+        if let agg = devices.first(where: { getString($0, kAudioDevicePropertyDeviceUID) == AGG_UID }) {
+            let status = AudioHardwareDestroyAggregateDevice(agg)
+            print(status == noErr ? "removed '\(AGG_NAME)'" : "ERROR: destroy failed: \(status)")
+            exit(status == noErr && ok ? 0 : 1)
+        }
+        print("'\(AGG_NAME)' not found — nothing to remove")
+    }
+    exit(ok ? 0 : 1)
+}
+
 // Bail if our aggregate already exists — just make it default again.
 if let existing = devices.first(where: { getString($0, kAudioDevicePropertyDeviceUID) == AGG_UID }) {
     let ok = setDefaultOutput(existing)

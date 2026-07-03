@@ -81,6 +81,16 @@ visualizer simply shows a hint instead.
 > (aggregate-device limitation). Use spotui's `+`/`-` — they control
 > Spotify's own volume.
 
+Turn it off / undo:
+
+```sh
+swift scripts/setup-audio.swift off      # back to speakers (device kept)
+swift scripts/setup-audio.swift remove   # back to speakers + delete the device
+```
+
+Re-running without arguments turns it back on. Or just pick any output in
+System Settings → Sound.
+
 ## Keys
 
 | Key | Action |
