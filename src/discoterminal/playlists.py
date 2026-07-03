@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from spotwave import webapi
+from discoterminal import webapi
 
 LOCAL_FILE = Path(__file__).parent / "playlists.json"
 

@@ -1,4 +1,4 @@
-from spotwave import player, spotify, webapi
+from discoterminal import player, spotify, webapi
 
 
 def test_shpotify_status_merges_volume(monkeypatch):

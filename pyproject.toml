@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "spotwave"
+name = "discoterminal"
 version = "0.1.0"
 description = "Spotify terminal UI — album art, cava audio visualizer, palette theming, lyrics. macOS/Linux, experimental Windows."
 readme = "README.md"
@@ -36,13 +36,13 @@ dev = [
 ]
 
 [project.scripts]
-spotwave = "spotwave.__main__:main"
+discoterminal = "discoterminal.__main__:main"
 
 [project.urls]
-Repository = "https://github.com/VinnyVanGogh/spotwave"
+Repository = "https://github.com/VinnyVanGogh/discoterminal"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/spotwave"]
+packages = ["src/discoterminal"]
 
 [tool.ruff]
 line-length = 100

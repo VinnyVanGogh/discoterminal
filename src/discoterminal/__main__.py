@@ -1,16 +1,16 @@
-"""spotwave entry point.
+"""discoterminal entry point.
 
 Usage:
-    spotwave                    # open the TUI
-    spotwave next               # open the TUI and skip track
-    spotwave <playlist name>    # open the TUI and play that playlist
-    spotwave play artist NF     # any shpotify command as startup action
+    discoterminal                    # open the TUI
+    discoterminal next               # open the TUI and skip track
+    discoterminal <playlist name>    # open the TUI and play that playlist
+    discoterminal play artist NF     # any shpotify command as startup action
 """
 
 import sys
 
-from spotwave import audio
-from spotwave.app import SpotifyTUI
+from discoterminal import audio
+from discoterminal.app import SpotifyTUI
 
 
 def main():

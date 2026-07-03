@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import sys
 
-from spotwave import spotify, webapi
+from discoterminal import spotify, webapi
 
 StatusDict = dict[str, object]
 

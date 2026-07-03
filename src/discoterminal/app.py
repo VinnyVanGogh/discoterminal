@@ -22,12 +22,12 @@ from textual.widgets import (
     Static,
 )
 
-from spotwave import lyrics, player, playlists, spotify, webapi
-from spotwave.screens import LyricsScreen, PickerScreen
-from spotwave.visualizer import PALETTES, CavaVisualizer
+from discoterminal import lyrics, player, playlists, spotify, webapi
+from discoterminal.screens import LyricsScreen, PickerScreen
+from discoterminal.visualizer import PALETTES, CavaVisualizer
 
 SETUP_TEXT = """\
-[bold]👋 Welcome to spotwave — one-time setup[/bold]
+[bold]👋 Welcome to discoterminal — one-time setup[/bold]
 
 No Spotify credentials found. To connect your account:
 
@@ -35,9 +35,9 @@ No Spotify credentials found. To connect your account:
    (Web API checkbox greyed out? Create the app without it,
     then Edit the app and add Web API there.)
 [bold]2.[/bold] Add redirect URI: [u]http://127.0.0.1:8888/callback[/u]
-[bold]3.[/bold] Put your Client ID in [u]~/.config/spotwave/config.json[/u]:
+[bold]3.[/bold] Put your Client ID in [u]~/.config/discoterminal/config.json[/u]:
    {"client_id": "your-client-id"}
-[bold]4.[/bold] Restart spotwave — a browser opens once to log in.
+[bold]4.[/bold] Restart discoterminal — a browser opens once to log in.
 
 [dim]macOS: `brew install shpotify` also enables local control
 without any of the above (playlists/search still need the API).[/dim]"""
@@ -748,7 +748,7 @@ class SpotifyTUI(App):
         viz.display = not viz.display
 
     def action_viz_style(self) -> None:
-        from spotwave.visualizer import STYLES
+        from discoterminal.visualizer import STYLES
 
         viz = self.query_one("#viz", CavaVisualizer)
         options = [
@@ -762,7 +762,7 @@ class SpotifyTUI(App):
         self.show_picker("Visualizer style", options, apply)
 
     def action_viz_colors(self) -> None:
-        from spotwave.visualizer import PALETTES
+        from discoterminal.visualizer import PALETTES
 
         viz = self.query_one("#viz", CavaVisualizer)
         options = []

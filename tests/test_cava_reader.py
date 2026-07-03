@@ -2,8 +2,8 @@
 
 import asyncio
 
-from spotwave.app import SpotifyTUI
-from spotwave.visualizer import CavaVisualizer
+from discoterminal.app import SpotifyTUI
+from discoterminal.visualizer import CavaVisualizer
 
 
 class FakeProcess:

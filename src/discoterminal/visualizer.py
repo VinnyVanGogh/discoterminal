@@ -20,7 +20,7 @@ from pathlib import Path
 
 from textual.widgets import Static
 
-from spotwave import webapi
+from discoterminal import webapi
 
 BLOCKS = " ▁▂▃▄▅▆▇█"
 STYLES = ("area", "bars", "mirror", "peaks", "outline", "dots", "led", "rain")

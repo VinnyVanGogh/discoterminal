@@ -1,6 +1,6 @@
 """webapi response-shaping against realistic Spotify JSON payloads."""
 
-from spotwave import webapi
+from discoterminal import webapi
 
 
 class FakeSpotify:

@@ -1,6 +1,6 @@
 import pytest
 
-from spotwave import player, spotify, visualizer, webapi
+from discoterminal import player, spotify, visualizer, webapi
 
 
 @pytest.fixture

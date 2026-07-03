@@ -7,7 +7,7 @@ import urllib.request
 
 import pytest
 
-from spotwave import lyrics
+from discoterminal import lyrics
 
 
 def _respond(monkeypatch, payload):

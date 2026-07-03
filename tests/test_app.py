@@ -1,8 +1,8 @@
 from textual.widgets import Input, ListView
 
-from spotwave.app import SpotifyTUI
-from spotwave.screens import PickerScreen
-from spotwave.visualizer import PALETTES
+from discoterminal.app import SpotifyTUI
+from discoterminal.screens import PickerScreen
+from discoterminal.visualizer import PALETTES
 
 
 async def test_now_playing_renders(calls):
@@ -110,7 +110,7 @@ async def test_seek_worker_uses_web_api(calls):
 
 
 async def test_like_toggles(calls, monkeypatch):
-    from spotwave import webapi
+    from discoterminal import webapi
 
     monkeypatch.setattr(webapi, "toggle_saved", lambda tid: False)
     app = SpotifyTUI()

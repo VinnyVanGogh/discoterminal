@@ -15,7 +15,7 @@ import ctypes.util
 import json
 import sys
 
-from spotwave import webapi
+from discoterminal import webapi
 
 MULTIOUT_UID = "com.spotify-tui.multi-out"
 
@@ -129,7 +129,7 @@ def _auto_enabled() -> bool:
 
 
 def enable_multiout() -> int | None:
-    """Make the spotwave Multi-Out the default output.
+    """Make the discoterminal Multi-Out the default output.
 
     Returns the previous default device id (for restore_output), or None
     when nothing changed: not macOS, opted out, device not set up, or

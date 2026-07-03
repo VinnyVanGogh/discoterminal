@@ -1,5 +1,5 @@
-from spotwave import player, webapi
-from spotwave.app import SpotifyTUI
+from discoterminal import player, webapi
+from discoterminal.app import SpotifyTUI
 
 
 async def test_first_run_shows_setup_checklist(monkeypatch):

@@ -1,8 +1,13 @@
-# spotwave
+# Disco Terminal
 
-A Spotify terminal UI. Album art in your terminal, a real-time audio
-visualizer powered by [cava], full-app color theming, lyrics, and playback
-control — without leaving your shell or focusing the Spotify window.
+**Turn your terminal into a disco.** A Spotify TUI with album art, a
+real-time [cava] audio visualizer, full-app color theming, lyrics, and
+playback control — without leaving your shell or focusing the Spotify
+window.
+
+```sh
+pipx install discoterminal
+```
 
 <!-- TODO: demo GIF — record with `vhs` or asciinema, drop here -->
 <!-- ![demo](docs/demo.gif) -->
@@ -46,23 +51,23 @@ macOS:
 
 ```sh
 brew install shpotify cava            # local control + visualizer
-pipx install spotwave                 # or: pip install spotwave
-spotwave
+pipx install discoterminal                 # or: pip install discoterminal
+discoterminal
 ```
 
 Linux:
 
 ```sh
 sudo apt install playerctl cava       # or your distro's equivalent
-pipx install spotwave
-spotwave
+pipx install discoterminal
+discoterminal
 ```
 
 Windows (experimental — [testers wanted](../../issues)):
 
 ```powershell
-pip install spotwave                  # control goes through the Web API
-spotwave                              # cava optional; needs a sixel-capable terminal
+pip install discoterminal                  # control goes through the Web API
+discoterminal                              # cava optional; needs a sixel-capable terminal
 ```
 
 Requires Python 3.11+ and the Spotify desktop app. The Web API features
@@ -77,7 +82,7 @@ playback control via shpotify/playerctl works without Premium.
      dashboard bug): create the app *without* it, then Edit the app and add
      Web API there — it won't be greyed out on edit.
 2. Add redirect URI: `http://127.0.0.1:8888/callback`
-3. Copy the **Client ID** into `~/.config/spotwave/config.json`:
+3. Copy the **Client ID** into `~/.config/discoterminal/config.json`:
 
    ```json
    { "client_id": "your-client-id-here" }
@@ -86,7 +91,7 @@ playback control via shpotify/playerctl works without Premium.
    (or `export SPOTIPY_CLIENT_ID=...`)
 
 4. First launch opens a browser to log in once; the token is cached after.
-   No client secret needed — spotwave uses the PKCE flow.
+   No client secret needed — discoterminal uses the PKCE flow.
 
 ## Visualizer audio setup (macOS only, optional)
 
@@ -103,12 +108,12 @@ swift scripts/setup-audio.swift      # create + activate a Multi-Output device
 ```
 
 The script builds a "Spotify TUI Multi-Out" device (your speakers +
-BlackHole) via CoreAudio and switches the system output to it. spotwave
+BlackHole) via CoreAudio and switches the system output to it. discoterminal
 auto-detects BlackHole and points cava at it. Skip all this and the
 visualizer simply shows a hint instead.
 
 > Note: with a Multi-Output device active, macOS volume keys are disabled
-> (aggregate-device limitation). Use spotwave's `+`/`-` — they control
+> (aggregate-device limitation). Use discoterminal's `+`/`-` — they control
 > Spotify's own volume.
 
 Turn it off / undo:
@@ -121,7 +126,7 @@ swift scripts/setup-audio.swift remove   # back to speakers + delete the device
 Re-running without arguments turns it back on. Or just pick any output in
 System Settings → Sound.
 
-**Automatic mode:** once the Multi-Out device exists, spotwave switches to it
+**Automatic mode:** once the Multi-Out device exists, discoterminal switches to it
 on launch and restores your previous output on quit — you only run the
 setup script once, ever. Opt out with `{"auto_multiout": false}` in
 config.json.
@@ -146,12 +151,12 @@ config.json.
 | click progress bar | Seek |
 | `q` | Quit |
 
-Startup arguments: `spotwave next`, `spotwave <playlist name>`, `spotwave play
+Startup arguments: `discoterminal next`, `discoterminal <playlist name>`, `discoterminal play
 artist NF` — opens the TUI and runs the action.
 
 ## Config reference
 
-`~/.config/spotwave/config.json`:
+`~/.config/discoterminal/config.json`:
 
 | Key | Values | Default |
 |-----|--------|---------|

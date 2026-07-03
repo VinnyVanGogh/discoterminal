@@ -1,6 +1,6 @@
 from rich.text import Text
 
-from spotwave.visualizer import PALETTES, STYLES, SpectrumRenderer, _sample
+from discoterminal.visualizer import PALETTES, STYLES, SpectrumRenderer, _sample
 
 
 def test_sample_resizes_to_width():

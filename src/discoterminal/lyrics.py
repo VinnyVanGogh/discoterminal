@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 
 API = "https://lrclib.net/api/get"
-USER_AGENT = "spotwave/0.1.0 (https://github.com/VinnyVanGogh/spotwave)"
+USER_AGENT = "discoterminal/0.1.0 (https://github.com/VinnyVanGogh/discoterminal)"
 
 
 def get_lyrics(artist: str, track: str, duration: float | None = None) -> str | None:

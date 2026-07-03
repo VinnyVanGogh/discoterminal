@@ -1,4 +1,4 @@
-from spotwave import audio
+from discoterminal import audio
 
 
 def test_enable_returns_none_when_multiout_missing(monkeypatch):

@@ -13,7 +13,7 @@ import json
 import os
 from pathlib import Path
 
-CONFIG_DIR = Path.home() / ".config" / "spotwave"
+CONFIG_DIR = Path.home() / ".config" / "discoterminal"
 _LEGACY_CONFIG_DIR = Path.home() / ".config" / "spotify_player"
 if not CONFIG_DIR.exists() and _LEGACY_CONFIG_DIR.exists():
     CONFIG_DIR = _LEGACY_CONFIG_DIR  # keep pre-rename setups working
