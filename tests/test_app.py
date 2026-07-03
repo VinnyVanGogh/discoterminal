@@ -109,10 +109,10 @@ async def test_seek_worker_uses_web_api(calls):
     assert ("api-seek", 90.0) in calls
 
 
-async def test_like_toggles(calls):
-    import spotwave.webapi as webapi
+async def test_like_toggles(calls, monkeypatch):
+    from spotwave import webapi
 
-    webapi.toggle_saved = lambda tid: False
+    monkeypatch.setattr(webapi, "toggle_saved", lambda tid: False)
     app = SpotifyTUI()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.6)
