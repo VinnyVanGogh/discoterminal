@@ -5,12 +5,15 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/VinnyVanGogh/discoterminal/blob/main/pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/VinnyVanGogh/discoterminal/blob/main/LICENSE)
 
-**Turn your terminal into a disco.** A Spotify TUI with album art, a
+**A Spotify client that runs entirely in your terminal.** Album art, a
 real-time [cava] audio visualizer, full-app color theming, synced lyrics,
-and playback control — without leaving your shell or focusing the Spotify
-window.
+and playback control — in iTerm2, kitty, or Windows Terminal, without
+leaving your shell or focusing the Spotify window. Turn your terminal
+into a disco.
 
 ![Disco Terminal — now playing with live visualizer](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/now-playing.png)
+
+<p align="center"><i>Yes — everything above is a terminal emulator rendering text.</i></p>
 
 ```sh
 pipx install discoterminal
