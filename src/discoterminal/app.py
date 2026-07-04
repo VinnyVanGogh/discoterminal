@@ -644,7 +644,9 @@ class DiscoTerminal(App):
         self.track_id = track["id"] if track else None
         self.saved = saved
         self._track_art = art
-        if self.card_face == "playing":
+        if self.card_face in ("playing", "lyrics"):
+            # artist face keeps the artist photo; every other face shows
+            # the current track's cover
             self._set_art(art, retries=6)
 
     def render_artist_card(self, info, image) -> None:
@@ -680,6 +682,7 @@ class DiscoTerminal(App):
             return
         self.card_face = "lyrics"
         self.query_one("#btn-flip", Button).label = "🎵 playing"
+        self._set_art(self._track_art, retries=6)  # in case artist photo was up
         if self.lyrics_for_key == self.track_key and (
             self.lyrics_synced or self.lyrics_plain
         ):
