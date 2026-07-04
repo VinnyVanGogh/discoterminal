@@ -1,16 +1,59 @@
 # Disco Terminal
 
 **Turn your terminal into a disco.** A Spotify TUI with album art, a
-real-time [cava] audio visualizer, full-app color theming, lyrics, and
-playback control — without leaving your shell or focusing the Spotify
+real-time [cava] audio visualizer, full-app color theming, synced lyrics,
+and playback control — without leaving your shell or focusing the Spotify
 window.
+
+![Disco Terminal — now playing with live visualizer](docs/media/now-playing.png)
 
 ```sh
 pipx install discoterminal
 ```
 
-<!-- TODO: demo GIF — record with `vhs` or asciinema, drop here -->
-<!-- ![demo](docs/demo.gif) -->
+## See it move
+
+Pick a palette and the whole app rethemes — visualizer, borders, buttons, labels:
+
+![Switching color palettes live](docs/media/visualizer-colors.gif)
+
+Eight visualizer styles (area, bars, mirror, peaks, outline, dots, led, rain):
+
+![Cycling visualizer styles](docs/media/visualizer-styles.gif)
+
+Synced lyrics follow the song, Spotify-style; the card flips between
+now-playing, artist info, and lyrics:
+
+![Lyrics and artist card](docs/media/artist-song-lyrics-card.gif)
+
+<details>
+<summary><b>More demos & screenshots</b> (search, playlists, playback, cards…)</summary>
+
+### Search anything
+
+![Search feature](docs/media/search-feature.gif)
+
+### Playlists sidebar
+
+![Playlist selection](docs/media/playlist-function.gif)
+
+### Playback controls
+
+![Playback controls](docs/media/playback-controls.gif)
+
+### Cards & pickers
+
+| | |
+|---|---|
+| ![Artist info card](docs/media/artist-info.png) | ![Lyrics card](docs/media/lyrics.png) |
+| ![Color palette picker](docs/media/color-options-card.png) | ![Visualizer style picker](docs/media/visualizer-styles-card.png) |
+| ![Queue viewer](docs/media/queue-card.png) | ![Collapsed sidebar & visualizer](docs/media/collapsed-visualizer-and-playlists.png) |
+
+### Visualizer on / off
+
+![Visualizer toggle](docs/media/visualizer-on-5-secs.gif)
+
+</details>
 
 Built with [Textual]. Playback control picks the best backend for your
 platform automatically:
