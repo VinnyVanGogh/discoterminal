@@ -148,6 +148,58 @@ def current_track() -> dict[str, str | None] | None:
     }
 
 
+def now_playing() -> dict[str, object] | None:
+    """Track + playback context + shuffle/repeat state — one call."""
+    playback = get_client().current_playback()
+    item = (playback or {}).get("item") if playback else None
+    if not playback or not item:
+        return None
+    images = (item.get("album") or {}).get("images") or []
+    context = playback.get("context") or {}
+    return {
+        "id": item.get("id"),
+        "uri": item.get("uri"),
+        "name": item.get("name"),
+        "artists": ", ".join(a["name"] for a in item.get("artists") or []),
+        "art_url": images[0]["url"] if images else None,
+        "context_uri": context.get("uri"),
+        "context_type": context.get("type"),
+        "shuffle": bool(playback.get("shuffle_state")),
+        "repeat": playback.get("repeat_state") or "off",
+    }
+
+
+def playlist_name(uri: str) -> str | None:
+    """Display name of a playlist URI."""
+    playlist_id = uri.rsplit(":", 1)[-1]
+    data = get_client().playlist(playlist_id, fields="name")
+    return (data or {}).get("name")
+
+
+def playlist_tracks(uri: str, limit: int = 100) -> list[dict[str, str]]:
+    """First `limit` tracks of a playlist: [{'label', 'uri'}]."""
+    playlist_id = uri.rsplit(":", 1)[-1]
+    page = get_client().playlist_items(
+        playlist_id, limit=min(limit, 100),
+        fields="items(track(name,uri,artists(name)))",
+    )
+    tracks = []
+    for entry in (page or {}).get("items") or []:
+        track = (entry or {}).get("track") or {}
+        if not track.get("uri"):
+            continue
+        artists = ", ".join(a["name"] for a in track.get("artists") or [])
+        tracks.append(
+            {"label": f"🎵 {track.get('name')} — {artists}", "uri": track["uri"]}
+        )
+    return tracks
+
+
+def play_in_context(context_uri: str, track_uri: str) -> None:
+    """Play a specific track inside its playlist/album context."""
+    get_client().start_playback(context_uri=context_uri, offset={"uri": track_uri})
+
+
 def current_artist_info() -> dict[str, object] | None:
     """Profile of the primary artist of the current track, or None."""
     sp = get_client()

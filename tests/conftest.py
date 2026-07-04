@@ -29,10 +29,21 @@ def calls(monkeypatch):
     monkeypatch.setattr(webapi, "all_playlists", lambda: {"Chill": "spotify:playlist:x"})
     monkeypatch.setattr(
         webapi,
-        "current_track",
+        "now_playing",
         lambda: {"id": "t1", "uri": "spotify:track:t1", "name": "MOTTO",
-                 "artists": "NF", "art_url": None},
+                 "artists": "NF", "art_url": None,
+                 "context_uri": "spotify:playlist:x", "context_type": "playlist",
+                 "shuffle": True, "repeat": "off"},
     )
+    monkeypatch.setattr(
+        webapi, "playlist_tracks",
+        lambda uri, limit=100: [{"label": "🎵 MOTTO — NF", "uri": "spotify:track:t1"}],
+    )
+    monkeypatch.setattr(
+        webapi, "play_in_context",
+        lambda c, t: recorded.append(("api-play-in-context", c, t)),
+    )
+    monkeypatch.setattr(webapi, "playlist_name", lambda uri: "Chill")
     monkeypatch.setattr(webapi, "is_saved", lambda tid: True)
     monkeypatch.setattr(webapi, "current_playback", lambda: {"progress_ms": 60000})
     monkeypatch.setattr(webapi, "play", lambda uri: recorded.append(("api-play", uri)))

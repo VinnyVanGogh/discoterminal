@@ -263,6 +263,10 @@ class DiscoTerminal(App):
         self.palette_name = "aurora"  # synced with visualizer palette on mount
         self._track_art = None  # PIL image of current track's cover
         self._artist_cache = {}  # artist id -> (info dict, PIL image)
+        self._context_names = {}  # context uri -> display label cache
+        self.context_label = None  # "name (playlist)" for the card
+        self.shuffle_on = None  # True/False/None(unknown)
+        self.repeat_state = None  # "off" | "context" | "track" | None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -379,6 +383,9 @@ class DiscoTerminal(App):
         except Exception as e:
             self.call_from_thread(self.notify, str(e), severity="error")
         self.call_from_thread(self.refresh_status)
+        if action in ("shuffle", "repeat"):
+            # indicators on the card come from the Web API state
+            self.call_from_thread(self.sync_track_details)
 
     @work(thread=True, group="commands")
     def run_spotify(self, *args) -> None:
@@ -394,14 +401,42 @@ class DiscoTerminal(App):
 
     @work(thread=True, exclusive=True, group="track-details")
     def sync_track_details(self) -> None:
-        """Web API details for the current track: id, saved state, album art."""
+        """Web API details: track id, saved state, art, context, shuffle/repeat."""
         try:
-            track = webapi.current_track()
-            saved = webapi.is_saved(track["id"]) if track and track["id"] else None
+            track = webapi.now_playing()
+            track_id = str(track["id"]) if track and track.get("id") else None
+            saved = webapi.is_saved(track_id) if track_id else None
         except Exception:
             return
         art = _fetch_image(track.get("art_url")) if track else None
-        self.call_from_thread(self.apply_track_details, track, saved, art)
+        context_label = self._resolve_context_label(track) if track else None
+        self.call_from_thread(
+            self.apply_track_details, track, saved, art, context_label
+        )
+
+    def _resolve_context_label(self, track) -> str | None:
+        """Human name for what's playing (runs in the sync worker thread)."""
+        context_uri = track.get("context_uri")
+        context_type = track.get("context_type")
+        if not context_uri or not context_type:
+            return None
+        cached = self._context_names.get(context_uri)
+        if cached:
+            return cached
+        name = None
+        if context_type == "playlist":
+            for entry_name, uri in self.playlist_entries:
+                if uri == context_uri:
+                    name = entry_name
+                    break
+            if name is None:
+                try:
+                    name = webapi.playlist_name(context_uri)
+                except Exception:
+                    name = None
+        label = f"{name or context_type} ({context_type})" if name else context_type
+        self._context_names[context_uri] = label
+        return label
 
     @work(thread=True, exclusive=True, group="artist-info")
     def load_artist_info(self) -> None:
@@ -622,13 +657,26 @@ class DiscoTerminal(App):
             heart = ""
 
         colors = PALETTES[self.palette_name]
-        lines = [f"[bold]{state_icon}[/bold]{heart}\n"]
+        state_line = f"[bold]{state_icon}[/bold]{heart}"
+        if self.shuffle_on is not None:
+            shuffle = "on" if self.shuffle_on else "off"
+            state_line += f"   [dim]🔀[/dim] [{colors[1]}]{shuffle}[/{colors[1]}]"
+        if self.repeat_state is not None:
+            state_line += (
+                f" [dim]·[/dim] [dim]🔁[/dim] "
+                f"[{colors[3]}]{self.repeat_state}[/{colors[3]}]"
+            )
+        lines = [state_line]
+        if self.context_label:
+            lines.append(
+                f"[dim]📻 Playing from:[/dim] "
+                f"[{colors[1]}]{self.context_label}[/{colors[1]}]"
+            )
+        lines.append("")
         for icon, dict_key, style in (
             ("🎤 Artist", "artist", colors[0]),
             ("💿 Album", "album", colors[2]),
             ("🎵 Track", "track", colors[4]),
-            ("🔀 Shuffle", "shuffle", colors[1]),
-            ("🔁 Repeat", "repeat", colors[3]),
         ):
             if dict_key in status:
                 lines.append(
@@ -643,10 +691,15 @@ class DiscoTerminal(App):
 
         panel.update("\n".join(lines))
 
-    def apply_track_details(self, track, saved, art) -> None:
+    def apply_track_details(self, track, saved, art, context_label=None) -> None:
         self.track_id = track["id"] if track else None
         self.saved = saved
         self._track_art = art
+        self.context_label = context_label
+        self.shuffle_on = track.get("shuffle") if track else None
+        self.repeat_state = track.get("repeat") if track else None
+        if self.card_face == "playing":
+            self.refresh_status()  # repaint the card with context + indicators
         if self.card_face in ("playing", "lyrics"):
             # artist face keeps the artist photo; every other face shows
             # the current track's cover
@@ -974,8 +1027,36 @@ class DiscoTerminal(App):
         index = int(index_str)
         if index < len(self.playlist_entries):
             name, uri = self.playlist_entries[index]
-            self.play_uri(uri)
-            self.notify(f"Playing playlist: {name}")
+            self.open_playlist(name, uri)
+
+    @work(thread=True, exclusive=True, group="playlist-tracks")
+    def open_playlist(self, name, uri) -> None:
+        """Modal: play the whole playlist, or pick one track (in context)."""
+        try:
+            tracks = webapi.playlist_tracks(uri)
+        except Exception:
+            tracks = []  # no API? fall back to a play-only option
+        options: list[tuple[str, tuple[str, ...]]] = [
+            ("▶ Play whole playlist (shuffle as-is)", ("all", uri))
+        ]
+        options += [(t["label"], ("track", uri, t["uri"])) for t in tracks]
+
+        def on_pick(choice):
+            if choice[0] == "all":
+                self.play_uri(choice[1])
+                self.notify(f"Playing playlist: {name}")
+            else:
+                self.play_track_in_context(choice[1], choice[2])
+
+        self.call_from_thread(self.show_picker, f"📻 {name}", options, on_pick)
+
+    @work(thread=True, group="commands")
+    def play_track_in_context(self, context_uri, track_uri) -> None:
+        try:
+            webapi.play_in_context(context_uri, track_uri)
+        except Exception as e:
+            self.call_from_thread(self.notify, str(e), severity="error")
+        self.call_from_thread(self.refresh_status)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         text = event.value.strip()

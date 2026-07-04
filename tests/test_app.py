@@ -30,7 +30,7 @@ async def test_keybinds_fire_shpotify_commands(calls):
         assert expected in commands
 
 
-async def test_playlist_selection_uses_web_api(calls):
+async def test_playlist_selection_opens_track_browser(calls):
     app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.8)
@@ -38,7 +38,35 @@ async def test_playlist_selection_uses_web_api(calls):
         await pilot.press("down")
         await pilot.press("enter")
         await pilot.pause(0.5)
+        assert isinstance(app.screen, PickerScreen)
+        # first option: play the whole playlist
+        await pilot.press("enter")
+        await pilot.pause(0.5)
     assert ("api-play", "spotify:playlist:x") in calls
+
+
+async def test_playlist_track_plays_in_context(calls):
+    app = DiscoTerminal()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.8)
+        app.query_one("#playlist-list", ListView).focus()
+        await pilot.press("down")
+        await pilot.press("enter")
+        await pilot.pause(0.5)
+        assert isinstance(app.screen, PickerScreen)
+        await pilot.press("down")  # second option: first track
+        await pilot.press("enter")
+        await pilot.pause(0.5)
+    assert ("api-play-in-context", "spotify:playlist:x", "spotify:track:t1") in calls
+
+
+async def test_card_shows_context_and_indicators(calls):
+    app = DiscoTerminal()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.8)
+        text = str(app.query_one("#now-playing").render())
+        assert "Playing from:" in text and "Chill (playlist)" in text, text
+        assert "🔀" in text and "🔁" in text, text
 
 
 async def test_search_opens_picker_and_plays_choice(calls):

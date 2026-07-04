@@ -4,6 +4,16 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.2.0] — 2026-07-04
+
+### Added
+- Now-playing card shows the playback context ("Playing from: <playlist>")
+- Selecting a playlist opens a track browser modal — play the whole
+  playlist or jump to a specific track within it (playback continues in
+  the playlist context)
+- Compact shuffle/repeat indicators on the state line, live from the
+  Web API (replaces the old text rows)
+
 ## [0.1.2] — 2026-07-04
 
 ### Fixed
