@@ -155,14 +155,14 @@ class DiscoTerminal(App):
     #now-playing-row {
         border: round $success;
         padding: 1 2;
-        height: 16;
+        height: 19;
     }
     DiscoTerminal.no-viz #now-playing-row {
         height: 1fr;
     }
     #album-art {
-        width: 24;
-        height: 12;
+        width: 30;
+        height: 15;
         margin-right: 2;
     }
     DiscoTerminal.narrow #album-art {
@@ -467,7 +467,7 @@ class DiscoTerminal(App):
         except Exception as e:
             self.call_from_thread(self.notify, f"Lyrics lookup failed: {e}",
                                   severity="error")
-            return
+            synced, plain = None, None  # resolve the "Fetching…" state
         self.lyrics_synced = synced
         self.lyrics_plain = plain
         self.lyrics_for_key = (artist, track)
@@ -698,6 +698,10 @@ class DiscoTerminal(App):
         if self.card_face != "lyrics":
             return
         panel = self.query_one("#now-playing", Static)
+        if self.lyrics_for_key != self.track_key:
+            # fetch for this track hasn't landed yet — never claim "no lyrics"
+            panel.update("[dim]Fetching lyrics…[/dim]")
+            return
         colors = PALETTES[self.palette_name]
         artist, track = self.track_key or ("", "")
 
