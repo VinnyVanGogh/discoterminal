@@ -2,7 +2,7 @@ import CoreAudio
 import Foundation
 
 let AGG_UID = "com.spotify-tui.multi-out"
-let AGG_NAME = "Spotify TUI Multi-Out"
+let AGG_NAME = "Disco Terminal Multi-Out"
 
 func getDevices() -> [AudioDeviceID] {
     var address = AudioObjectPropertyAddress(

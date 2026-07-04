@@ -2,7 +2,7 @@
 
 import asyncio
 
-from discoterminal.app import SpotifyTUI
+from discoterminal.app import DiscoTerminal
 from discoterminal.visualizer import CavaVisualizer
 
 
@@ -18,7 +18,7 @@ class FakeProcess:
 
 
 async def test_read_loop_parses_frames_and_tracks_silence(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.3)
         viz = app.query_one(CavaVisualizer)

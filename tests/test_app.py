@@ -1,12 +1,12 @@
 from textual.widgets import Input, ListView
 
-from discoterminal.app import SpotifyTUI
+from discoterminal.app import DiscoTerminal
 from discoterminal.screens import PickerScreen
 from discoterminal.visualizer import PALETTES
 
 
 async def test_now_playing_renders(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.6)
         text = str(app.query_one("#now-playing").render())
@@ -16,7 +16,7 @@ async def test_now_playing_renders(calls):
 
 
 async def test_keybinds_fire_shpotify_commands(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.5)
         for key in ("n", "p", "space", "plus", "minus", "s", "t"):
@@ -31,7 +31,7 @@ async def test_keybinds_fire_shpotify_commands(calls):
 
 
 async def test_playlist_selection_uses_web_api(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.8)
         app.query_one("#playlist-list", ListView).focus()
@@ -42,7 +42,7 @@ async def test_playlist_selection_uses_web_api(calls):
 
 
 async def test_search_opens_picker_and_plays_choice(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.5)
         await pilot.press("slash")
@@ -58,7 +58,7 @@ async def test_search_opens_picker_and_plays_choice(calls):
 
 
 async def test_queue_picker(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.5)
         await pilot.press("u")
@@ -68,7 +68,7 @@ async def test_queue_picker(calls):
 
 
 async def test_card_flip_shows_artist_and_back(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.6)
         await pilot.press("i")
@@ -87,7 +87,7 @@ async def test_card_flip_shows_artist_and_back(calls):
 
 
 async def test_palette_switch_rethemes_app(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.5)
         assert app.theme == "viz-aurora"
@@ -101,7 +101,7 @@ async def test_palette_switch_rethemes_app(calls):
 
 
 async def test_seek_worker_uses_web_api(calls):
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.5)
         app.seek_to(90.0)
@@ -113,7 +113,7 @@ async def test_like_toggles(calls, monkeypatch):
     from discoterminal import webapi
 
     monkeypatch.setattr(webapi, "toggle_saved", lambda tid: False)
-    app = SpotifyTUI()
+    app = DiscoTerminal()
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.6)
         await pilot.press("l")
@@ -122,7 +122,7 @@ async def test_like_toggles(calls, monkeypatch):
 
 
 async def test_narrow_terminal_hides_sidebar(calls):
-    app = SpotifyTUI(startup_args=["chill"])
+    app = DiscoTerminal(startup_args=["chill"])
     async with app.run_test(size=(70, 40)) as pilot:
         await pilot.pause(0.8)
         assert app.has_class("narrow")

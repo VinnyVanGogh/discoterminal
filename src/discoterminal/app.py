@@ -1,6 +1,7 @@
 """Textual TUI for controlling Spotify via shpotify + the Web API."""
 
 import io
+import json
 import re
 import urllib.request
 
@@ -114,6 +115,7 @@ def parse_position(text):
 def format_seconds(seconds):
     if seconds is None:
         return "-:--"
+    seconds = int(seconds)
     return f"{seconds // 60}:{seconds % 60:02d}"
 
 
@@ -128,8 +130,8 @@ def _fetch_image(url):
         return None
 
 
-class SpotifyTUI(App):
-    TITLE = "🎧 Spotify TUI"
+class DiscoTerminal(App):
+    TITLE = "🪩 Disco Terminal"
 
     CSS = """
     #body {
@@ -144,7 +146,7 @@ class SpotifyTUI(App):
         text-style: bold;
         color: $accent;
     }
-    SpotifyTUI.narrow #sidebar {
+    DiscoTerminal.narrow #sidebar {
         display: none;
     }
     #main {
@@ -155,7 +157,7 @@ class SpotifyTUI(App):
         padding: 1 2;
         height: 16;
     }
-    SpotifyTUI.no-viz #now-playing-row {
+    DiscoTerminal.no-viz #now-playing-row {
         height: 1fr;
     }
     #album-art {
@@ -163,7 +165,7 @@ class SpotifyTUI(App):
         height: 12;
         margin-right: 2;
     }
-    SpotifyTUI.narrow #album-art {
+    DiscoTerminal.narrow #album-art {
         display: none;
     }
     #now-playing {
@@ -228,6 +230,8 @@ class SpotifyTUI(App):
         Binding("i", "flip_card", "Artist info"),
         Binding("u", "show_queue", "Queue"),
         Binding("y", "show_lyrics_card", "Lyrics"),
+        Binding("left_square_bracket", "lyrics_earlier", show=False),
+        Binding("right_square_bracket", "lyrics_later", show=False),
         Binding("slash", "focus_search", "Search"),
         Binding("escape", "blur_search", show=False),
         Binding("q", "quit", "Quit"),
@@ -249,6 +253,12 @@ class SpotifyTUI(App):
         self.lyrics_plain = None  # plain-text fallback
         self.lyrics_for_key = None  # (artist, track) the lyrics belong to
         self._lyrics_index = None  # last rendered synced-line index
+        try:
+            self.lyrics_offset = float(
+                json.loads(webapi.CONFIG_FILE.read_text()).get("lyrics_offset", 0.0)
+            )
+        except (OSError, ValueError, TypeError):
+            self.lyrics_offset = 0.0
         self.needs_setup = False  # true when no credentials and no local CLI
         self.palette_name = "aurora"  # synced with visualizer palette on mount
         self._track_art = None  # PIL image of current track's cover
@@ -302,6 +312,10 @@ class SpotifyTUI(App):
 
         self.set_interval(STATUS_POLL_SECONDS, self.refresh_status)
         self.set_interval(1.0, self.tick_position)
+        # Sixel/TGP art can get clobbered by other repaints (iTerm2);
+        # a periodic refresh re-emits it so it never stays gone.
+        if AlbumArt is not None:
+            self.set_interval(5.0, self._refresh_art)
         self.refresh_status()
         self.load_playlists()
         if self.startup_args:
@@ -341,6 +355,21 @@ class SpotifyTUI(App):
         status = player.get_backend().status()
         volume = status.pop("volume", None) if status else None
         self.call_from_thread(self.render_now_playing, status, volume)
+        if self.card_face == "lyrics":
+            # Millisecond-accurate resync — local CLIs round to whole
+            # seconds and can lag, which drags the highlighted line behind.
+            try:
+                progress = (webapi.current_playback() or {}).get("progress_ms")
+            except Exception:
+                progress = None
+            if progress is not None:
+                self.call_from_thread(self.set_precise_position, progress / 1000)
+
+    def set_precise_position(self, seconds: float) -> None:
+        self.elapsed = seconds
+        self.update_progress()
+        if self.card_face == "lyrics":
+            self.render_lyrics_card()
 
     @work(thread=True, group="commands")
     def run_player(self, action: str) -> None:
@@ -443,7 +472,14 @@ class SpotifyTUI(App):
         self.lyrics_plain = plain
         self.lyrics_for_key = (artist, track)
         self._lyrics_index = None
-        self.call_from_thread(self.render_lyrics_card)
+        try:
+            progress = (webapi.current_playback() or {}).get("progress_ms")
+        except Exception:
+            progress = None
+        if progress is not None:
+            self.call_from_thread(self.set_precise_position, progress / 1000)
+        else:
+            self.call_from_thread(self.render_lyrics_card)
 
     @work(thread=True, exclusive=True, group="seek")
     def seek_to(self, seconds) -> None:
@@ -675,9 +711,11 @@ class SpotifyTUI(App):
                 _stamp, text = self.lyrics_synced[i]
                 text = text or "♪"
                 if i == index:
-                    lines.append(f"[bold {colors[2]}]▶ {text}[/bold {colors[2]}]")
+                    lines.append(
+                        f"[bold black on {colors[2]}] ▶ {text} [/bold black on {colors[2]}]"
+                    )
                 else:
-                    lines.append(f"[dim]  {text}[/dim]")
+                    lines.append(f"[dim]   {text}[/dim]")
             panel.update("\n".join(lines))
         elif self.lyrics_plain:
             body = "\n".join(self.lyrics_plain.splitlines()[:11])
@@ -692,13 +730,30 @@ class SpotifyTUI(App):
         """Index of the synced line matching the playback position."""
         if not self.lyrics_synced or self.elapsed is None:
             return None
+        position = self.elapsed + self.lyrics_offset
         index = None
         for i, (stamp, _text) in enumerate(self.lyrics_synced):
-            if stamp <= self.elapsed:
+            if stamp <= position:
                 index = i
             else:
                 break
         return index
+
+    def _nudge_lyrics(self, delta: float) -> None:
+        if self.card_face != "lyrics":
+            return
+        from discoterminal.visualizer import _save_config_value
+
+        self.lyrics_offset = round(self.lyrics_offset + delta, 2)
+        _save_config_value("lyrics_offset", self.lyrics_offset)
+        self.notify(f"Lyrics sync offset: {self.lyrics_offset:+.1f}s")
+        self.render_lyrics_card()
+
+    def _refresh_art(self) -> None:
+        try:
+            self.query_one("#album-art").refresh()
+        except NoMatches:
+            pass
 
     def _set_art(self, art, retries=0) -> None:
         """Apply album art, retrying while the widget hasn't been laid out yet.
@@ -851,6 +906,12 @@ class SpotifyTUI(App):
 
     def action_show_queue(self) -> None:
         self.load_queue()
+
+    def action_lyrics_earlier(self) -> None:
+        self._nudge_lyrics(-0.5)
+
+    def action_lyrics_later(self) -> None:
+        self._nudge_lyrics(0.5)
 
     def action_focus_search(self) -> None:
         self.query_one("#search", Input).focus()

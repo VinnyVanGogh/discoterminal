@@ -1,4 +1,4 @@
-"""Modal screens for the Spotify TUI."""
+"""Modal screens for Disco Terminal."""
 
 from textual.containers import Vertical
 from textual.screen import ModalScreen

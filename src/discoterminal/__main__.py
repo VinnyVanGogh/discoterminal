@@ -10,7 +10,7 @@ Usage:
 import sys
 
 from discoterminal import audio
-from discoterminal.app import SpotifyTUI
+from discoterminal.app import DiscoTerminal
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
     except Exception:
         restore = None
     try:
-        SpotifyTUI(startup_args=sys.argv[1:]).run()
+        DiscoTerminal(startup_args=sys.argv[1:]).run()
     finally:
         if restore is not None:
             audio.restore_output(restore)

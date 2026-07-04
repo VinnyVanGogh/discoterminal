@@ -1,6 +1,6 @@
 """macOS default-output switching via CoreAudio (ctypes, no dependencies).
 
-Enables the "Spotify TUI Multi-Out" aggregate device while the app runs —
+Enables the "Disco Terminal Multi-Out" aggregate device while the app runs —
 so cava hears audio — and restores the previous output on exit. The
 aggregate itself is created once by scripts/setup-audio.swift; this module
 only switches between existing devices.

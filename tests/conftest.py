@@ -34,6 +34,7 @@ def calls(monkeypatch):
                  "artists": "NF", "art_url": None},
     )
     monkeypatch.setattr(webapi, "is_saved", lambda tid: True)
+    monkeypatch.setattr(webapi, "current_playback", lambda: {"progress_ms": 60000})
     monkeypatch.setattr(webapi, "play", lambda uri: recorded.append(("api-play", uri)))
     monkeypatch.setattr(webapi, "seek", lambda s: recorded.append(("api-seek", s)))
     monkeypatch.setattr(
