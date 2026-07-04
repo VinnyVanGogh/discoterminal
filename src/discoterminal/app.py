@@ -542,7 +542,10 @@ class DiscoTerminal(App):
 
     def populate_sidebar(self, loaded, source, error) -> None:
         self.playlist_entries = list(loaded.items())
-        list_view = self.query_one("#playlist-list", ListView)
+        try:
+            list_view = self.query_one("#playlist-list", ListView)
+        except NoMatches:
+            return  # app shutting down
         list_view.clear()
         for i, (name, _uri) in enumerate(self.playlist_entries):
             list_view.append(ListItem(Label(name, markup=False), id=f"pl-{i}"))
@@ -652,6 +655,10 @@ class DiscoTerminal(App):
     def render_artist_card(self, info, image) -> None:
         if self.card_face != "artist":
             return  # user flipped back while we were fetching
+        try:
+            panel = self.query_one("#now-playing", Static)
+        except NoMatches:
+            return  # app shutting down
         colors = PALETTES[self.palette_name]
         lines = [f"[bold {colors[4]}]🎤 {info['name']}[/bold {colors[4]}]\n"]
         if info.get("genres"):
@@ -664,7 +671,7 @@ class DiscoTerminal(App):
             lines.append("\n[bold]Top tracks[/bold]")
             for i, name in enumerate(info["top_tracks"], 1):
                 lines.append(f"  {i}. {name}")
-        self.query_one("#now-playing", Static).update("\n".join(lines))
+        panel.update("\n".join(lines))
         self._set_art(image, retries=6)
 
     def action_flip_card(self) -> None:
@@ -700,7 +707,10 @@ class DiscoTerminal(App):
     def render_lyrics_card(self) -> None:
         if self.card_face != "lyrics":
             return
-        panel = self.query_one("#now-playing", Static)
+        try:
+            panel = self.query_one("#now-playing", Static)
+        except NoMatches:
+            return  # app shutting down
         if self.lyrics_for_key != self.track_key:
             # fetch for this track hasn't landed yet — never claim "no lyrics"
             panel.update("[dim]Fetching lyrics…[/dim]")

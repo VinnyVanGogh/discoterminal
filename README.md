@@ -3,14 +3,14 @@
 [![CI](https://github.com/VinnyVanGogh/discoterminal/actions/workflows/ci.yml/badge.svg)](https://github.com/VinnyVanGogh/discoterminal/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/discoterminal)](https://pypi.org/project/discoterminal/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/VinnyVanGogh/discoterminal/blob/main/pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/VinnyVanGogh/discoterminal/blob/main/LICENSE)
 
 **Turn your terminal into a disco.** A Spotify TUI with album art, a
 real-time [cava] audio visualizer, full-app color theming, synced lyrics,
 and playback control — without leaving your shell or focusing the Spotify
 window.
 
-![Disco Terminal — now playing with live visualizer](docs/media/now-playing.png)
+![Disco Terminal — now playing with live visualizer](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/now-playing.png)
 
 ```sh
 pipx install discoterminal
@@ -20,43 +20,43 @@ pipx install discoterminal
 
 Pick a palette and the whole app rethemes — visualizer, borders, buttons, labels:
 
-![Switching color palettes live](docs/media/visualizer-colors.gif)
+![Switching color palettes live](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/visualizer-colors.gif)
 
 Eight visualizer styles (area, bars, mirror, peaks, outline, dots, led, rain):
 
-![Cycling visualizer styles](docs/media/visualizer-styles.gif)
+![Cycling visualizer styles](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/visualizer-styles.gif)
 
 Synced lyrics follow the song, Spotify-style; the card flips between
 now-playing, artist info, and lyrics:
 
-![Lyrics and artist card](docs/media/artist-song-lyrics-card.gif)
+![Lyrics and artist card](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/artist-song-lyrics-card.gif)
 
 <details>
 <summary><b>More demos & screenshots</b> (search, playlists, playback, cards…)</summary>
 
 ### Search anything
 
-![Search feature](docs/media/search-feature.gif)
+![Search feature](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/search-feature.gif)
 
 ### Playlists sidebar
 
-![Playlist selection](docs/media/playlist-function.gif)
+![Playlist selection](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/playlist-function.gif)
 
 ### Playback controls
 
-![Playback controls](docs/media/playback-controls.gif)
+![Playback controls](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/playback-controls.gif)
 
 ### Cards & pickers
 
 | | |
 |---|---|
-| ![Artist info card](docs/media/artist-info.png) | ![Lyrics card](docs/media/lyrics.png) |
-| ![Color palette picker](docs/media/color-options-card.png) | ![Visualizer style picker](docs/media/visualizer-styles-card.png) |
-| ![Queue viewer](docs/media/queue-card.png) | ![Collapsed sidebar & visualizer](docs/media/collapsed-visualizer-and-playlists.png) |
+| ![Artist info card](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/artist-info.png) | ![Lyrics card](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/lyrics.png) |
+| ![Color palette picker](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/color-options-card.png) | ![Visualizer style picker](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/visualizer-styles-card.png) |
+| ![Queue viewer](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/queue-card.png) | ![Collapsed sidebar & visualizer](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/collapsed-visualizer-and-playlists.png) |
 
 ### Visualizer on / off
 
-![Visualizer toggle](docs/media/visualizer-on-5-secs.gif)
+![Visualizer toggle](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/visualizer-on-5-secs.gif)
 
 </details>
 
@@ -111,7 +111,7 @@ pipx install discoterminal
 discoterminal
 ```
 
-Windows (experimental — [testers wanted](../../issues)):
+Windows (experimental — [testers wanted](https://github.com/VinnyVanGogh/discoterminal/issues)):
 
 ```powershell
 pip install discoterminal                  # control goes through the Web API
@@ -155,7 +155,7 @@ sudo killall coreaudiod              # load the driver
 swift scripts/setup-audio.swift      # create + activate a Multi-Output device
 ```
 
-The script builds a "Spotify TUI Multi-Out" device (your speakers +
+The script builds a "Disco Terminal Multi-Out" device (your speakers +
 BlackHole) via CoreAudio and switches the system output to it. discoterminal
 auto-detects BlackHole and points cava at it. Skip all this and the
 visualizer simply shows a hint instead.

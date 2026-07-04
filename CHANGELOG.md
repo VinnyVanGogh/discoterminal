@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.1.1] — 2026-07-03
+
+### Fixed
+- README images now use absolute URLs so they render on PyPI
+- Album-art retry timer no longer outlives the app on hidden widgets
+  (Windows CI flake); all worker-scheduled renders tolerate shutdown
+
 ## [0.1.0] — 2026-07-03
 
 Initial release. 🪩
