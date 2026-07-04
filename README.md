@@ -1,5 +1,10 @@
 # Disco Terminal
 
+[![CI](https://github.com/VinnyVanGogh/discoterminal/actions/workflows/ci.yml/badge.svg)](https://github.com/VinnyVanGogh/discoterminal/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/discoterminal)](https://pypi.org/project/discoterminal/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/VinnyVanGogh/discoterminal/blob/main/pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **Turn your terminal into a disco.** A Spotify TUI with album art, a
 real-time [cava] audio visualizer, full-app color theming, synced lyrics,
 and playback control — without leaving your shell or focusing the Spotify

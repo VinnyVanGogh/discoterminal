@@ -1,0 +1,28 @@
+name: Bug report
+description: Something broke
+labels: [bug]
+body:
+  - type: input
+    id: platform
+    attributes:
+      label: Platform & terminal
+      placeholder: "macOS 15 / iTerm2 3.6, Ubuntu 24.04 / kitty, Windows 11 / Windows Terminal…"
+    validations:
+      required: true
+  - type: input
+    id: backend
+    attributes:
+      label: Playback backend
+      description: shpotify / playerctl / webapi (shown by which platform you're on, or `backend` in config)
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you got. Paste tracebacks if any.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config (redact client_id!)
+      render: json

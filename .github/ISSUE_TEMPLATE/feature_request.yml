@@ -1,0 +1,15 @@
+name: Feature request
+description: An idea for Disco Terminal
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What should it do, and what problem does it solve for you?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
