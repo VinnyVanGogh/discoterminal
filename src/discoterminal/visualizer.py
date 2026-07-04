@@ -264,9 +264,12 @@ class SpectrumRenderer:
         sky = height - floor_rows
         levels = self._levels(cols, height)
 
-        # advance + cull
+        # advance + cull (also discard drops left stranded by a resize —
+        # their x can exceed the new, narrower width)
         self._drops = [
-            [x, y + speed, speed] for x, y, speed in self._drops if y + speed < sky
+            [x, y + speed, speed]
+            for x, y, speed in self._drops
+            if y + speed < sky and x < len(cols)
         ]
         # spawn from loud columns
         if len(self._drops) < len(cols):
@@ -372,9 +375,13 @@ class CavaVisualizer(Static):
         if width < 2 or height < 1:
             return
         cols = _sample(values, width)
-        self.update(
-            self._renderer.render(cols, height, self.style_name, self.palette_name)
-        )
+        try:
+            markup = self._renderer.render(
+                cols, height, self.style_name, self.palette_name
+            )
+        except Exception:
+            return  # a bad frame must never take down the app
+        self.update(markup)
 
     def on_unmount(self) -> None:
         if self._process and self._process.poll() is None:

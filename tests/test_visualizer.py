@@ -37,3 +37,16 @@ def test_unknown_style_falls_back_to_area():
     renderer = SpectrumRenderer()
     markup = renderer.render([4] * 10, 5, "nonsense")
     assert len(markup.split("\n")) == 5
+
+
+def test_rain_survives_resize_narrower():
+    renderer = SpectrumRenderer()
+    # spawn drops at a wide width
+    for _ in range(20):
+        renderer.render([8] * 150, 20, "rain")
+    assert renderer._drops, "expected some drops to have spawned"
+    # shrink the terminal — stale drops beyond the new width must be culled
+    for _ in range(5):
+        markup = renderer.render([8] * 100, 20, "rain")
+    assert all(x < 100 for x, _y, _s in renderer._drops)
+    assert len(markup.split("\n")) == 20

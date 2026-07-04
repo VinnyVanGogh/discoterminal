@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.1.2] — 2026-07-04
+
+### Fixed
+- Rain visualizer crashed with IndexError when the terminal was resized
+  narrower (stale droplets kept coordinates from the wider layout)
+- A failed visualizer frame can no longer crash the whole app
+
 ## [0.1.1] — 2026-07-03
 
 ### Fixed

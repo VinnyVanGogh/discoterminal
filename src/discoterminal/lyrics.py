@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 
 API = "https://lrclib.net/api/get"
-USER_AGENT = "discoterminal/0.1.1 (https://github.com/VinnyVanGogh/discoterminal)"
+USER_AGENT = "discoterminal/0.1.2 (https://github.com/VinnyVanGogh/discoterminal)"
 
 TIMESTAMP_RE = re.compile(r"\[(\d+):(\d{2})(?:\.(\d{1,2}))?\]\s?(.*)")
 
