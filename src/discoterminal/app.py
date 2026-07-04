@@ -771,7 +771,12 @@ class DiscoTerminal(App):
         """
         if AlbumArt is None:
             return
-        widget = self.query_one("#album-art")
+        try:
+            widget = self.query_one("#album-art")
+        except NoMatches:
+            return  # app shutting down
+        if not widget.display:
+            return  # hidden (narrow terminal) — retrying would loop forever
         if widget.size.width == 0 and retries > 0:
             self.set_timer(0.5, lambda: self._set_art(art, retries - 1))
             return
