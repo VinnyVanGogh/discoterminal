@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "discoterminal"
-version = "0.3.0"
+version = "0.3.1"
 description = "A Spotify client for your terminal (TUI) — album art, cava audio visualizer, palette theming, synced lyrics. macOS/Linux, experimental Windows."
 readme = "README.md"
 license = "MIT"

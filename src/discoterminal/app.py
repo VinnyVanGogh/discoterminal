@@ -916,6 +916,7 @@ class DiscoTerminal(App):
         elif self.rave_mode == "pulse":
             self.rave_mode = "takeover"
             self.add_class("rave-takeover")
+            self.query_one("#viz", CavaVisualizer).rave_takeover = True
             self._update_rave_title()
             self.notify("🕺 Rave: TAKEOVER (R or Escape exits)", timeout=4)
         else:
@@ -926,6 +927,7 @@ class DiscoTerminal(App):
         self.remove_class("rave-takeover")
         viz = self.query_one("#viz", CavaVisualizer)
         viz.overlay_title = None
+        viz.rave_takeover = False
         if self._pre_rave_palette:
             self.apply_palette(self._pre_rave_palette)
             self._pre_rave_palette = None
@@ -943,6 +945,7 @@ class DiscoTerminal(App):
         choices = [n for n in PALETTES if n != self.palette_name]
         self.apply_palette(random.choice(choices), refresh=False)
         if self.rave_mode == "takeover":
+            self.query_one("#viz", CavaVisualizer).trigger_beat()
             self._update_rave_title()
 
     def play_uri(self, uri) -> None:

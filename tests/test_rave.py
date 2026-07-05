@@ -74,3 +74,28 @@ async def test_beats_ignored_when_rave_off(calls):
         before = app.palette_name
         app.on_rave_beat()
         assert app.palette_name == before
+
+
+def test_rave_renderer_kaleido_flash_and_slam():
+    from rich.text import Text
+
+    from discoterminal.visualizer import SpectrumRenderer
+
+    renderer = SpectrumRenderer()
+    cols = [(i * 3) % 9 for i in range(60)]
+
+    frames = [renderer.render_rave(cols, 12) for _ in range(6)]
+    for frame in frames:
+        lines = frame.split("\n")
+        assert len(lines) == 12
+        for line in lines:
+            assert Text.from_markup(line).cell_len == 60
+    assert len(set(frames)) > 1, "column colors should flow across frames"
+
+    # beat -> one full-frame strobe, then slammed bars that decay
+    renderer.trigger_beat()
+    flash = renderer.render_rave(cols, 12)
+    assert Text.from_markup(flash.split("\n")[0]).plain == "█" * 60
+    after_flash_gain = renderer._rave_gain
+    renderer.render_rave(cols, 12)
+    assert renderer._rave_gain <= after_flash_gain

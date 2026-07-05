@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.3.1] — 2026-07-05
+
+### Changed
+- Rave takeover now uses a dedicated kaleido renderer: 4-way symmetric
+  blob, beat slam (bars leap ~2x and decay), one-frame full strobe per
+  beat, and gradient bands flowing sideways between beats. Your normal
+  visualizer style is untouched.
+
 ## [0.3.0] — 2026-07-05
 
 ### Added

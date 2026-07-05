@@ -179,12 +179,72 @@ def _colorize(rows: list[list[str]], height: int, gradient: tuple[str, ...]) -> 
     return "\n".join(out)
 
 
+RAVE_GAIN = 1.9  # bar-height multiplier on a beat
+RAVE_DECAY = 0.88  # gain decay per frame back toward 1.0
+RAVE_PHASE_STEP = 0.35  # sideways color-flow speed (bands per frame)
+
+
+def _colorize_columns(rows, gradient, phase: float) -> str:
+    """Color by column bands (not row) with a scrolling phase offset —
+    the gradient flows sideways across the frame."""
+    n = len(gradient)
+    width = len(rows[0]) if rows else 0
+    band_width = max(width // (n * 2), 1)
+    out = []
+    for chars in rows:
+        parts = []
+        for start in range(0, width, band_width):
+            color = gradient[int(start / band_width + phase) % n]
+            segment = "".join(chars[start:start + band_width])
+            parts.append(f"[{color}]{segment}[/]")
+        out.append("".join(parts))
+    return "\n".join(out)
+
+
 class SpectrumRenderer:
     """Stateful frame renderer (peak caps and rain drops persist between frames)."""
 
     def __init__(self):
         self._peaks = []
         self._drops = []  # [x, y, speed] falling droplets for the rain style
+        self._rave_gain = 1.0  # beat slam, decays back to 1.0
+        self._rave_phase = 0.0  # sideways color flow
+        self._rave_flash = 0  # full-frame strobe frames remaining
+
+    def trigger_beat(self) -> None:
+        """A beat landed: slam the bars and strobe one full frame."""
+        self._rave_gain = RAVE_GAIN
+        self._rave_flash = 1
+
+    def render_rave(self, cols, height, palette=DEFAULT_PALETTE) -> str:
+        """Takeover renderer: 4-way kaleido blob + beat slam + strobe +
+        flowing column colors. Independent of the user's chosen style."""
+        gradient = PALETTES.get(palette, PALETTES[DEFAULT_PALETTE])
+
+        if self._rave_flash > 0:
+            self._rave_flash -= 1
+            row = "█" * len(cols)
+            return "\n".join(
+                f"[{gradient[-1]}]{row}[/]" for _ in range(height)
+            )
+
+        self._rave_gain = max(1.0, self._rave_gain * RAVE_DECAY)
+        self._rave_phase += RAVE_PHASE_STEP
+
+        # left half mirrored onto the right = horizontal symmetry
+        half = cols[: max(len(cols) // 2, 1)]
+        sym = half + half[::-1]
+        sym = sym[: len(cols)] + [0] * (len(cols) - len(sym))
+
+        # vertical symmetry: blob grows out from the center line
+        half_height = max(height // 2, 1)
+        levels = [
+            min(v * self._rave_gain, MAX_RANGE) / MAX_RANGE * half_height
+            for v in sym
+        ]
+        bottom = _grid(levels, half_height)
+        rows = bottom[::-1] + ([[" "] * len(sym)] if height % 2 else []) + bottom
+        return _colorize_columns(rows[:height], gradient, self._rave_phase)
 
     def render(self, cols, height, style, palette=DEFAULT_PALETTE):
         gradient = PALETTES.get(palette, PALETTES[DEFAULT_PALETTE])
@@ -307,6 +367,7 @@ class CavaVisualizer(Static):
         self.palette_name = load_palette()
         self.on_beat = None  # set by the app; called on the UI thread
         self.overlay_title = None  # rave takeover: track name over the viz
+        self.rave_takeover = False  # use the dedicated kaleido renderer
         self._energy_window: list[int] = []
         self._last_beat = 0.0
 
@@ -357,6 +418,9 @@ class CavaVisualizer(Static):
         if name in PALETTES:
             self.palette_name = name
             save_palette(name)
+
+    def trigger_beat(self) -> None:
+        self._renderer.trigger_beat()
 
     def start_cava(self) -> None:
         text = CAVA_CONFIG
@@ -417,9 +481,12 @@ class CavaVisualizer(Static):
             height -= 1
         cols = _sample(values, width)
         try:
-            markup = self._renderer.render(
-                cols, height, self.style_name, self.palette_name
-            )
+            if self.rave_takeover:
+                markup = self._renderer.render_rave(cols, height, self.palette_name)
+            else:
+                markup = self._renderer.render(
+                    cols, height, self.style_name, self.palette_name
+                )
         except Exception:
             return  # a bad frame must never take down the app
         if title_row:
