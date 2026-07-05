@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 from textual.widgets import Static
@@ -291,6 +292,11 @@ class SpectrumRenderer:
         return rows
 
 
+BEAT_THRESHOLD = 1.4  # frame energy vs rolling average
+BEAT_MIN_INTERVAL = 0.25  # seconds — caps flashes at 4/sec (photosensitivity)
+BEAT_WINDOW = 24  # frames of rolling energy (~2s at 12fps)
+
+
 class CavaVisualizer(Static):
     def __init__(self, **kwargs):
         super().__init__("", **kwargs)
@@ -299,6 +305,33 @@ class CavaVisualizer(Static):
         self._renderer = SpectrumRenderer()
         self.style_name = load_style()
         self.palette_name = load_palette()
+        self.on_beat = None  # set by the app; called on the UI thread
+        self.overlay_title = None  # rave takeover: track name over the viz
+        self._energy_window: list[int] = []
+        self._last_beat = 0.0
+
+    def _check_beat(self, values, now: float) -> bool:
+        """True when this frame's energy spikes above the rolling average.
+
+        Rate-limited to one beat per BEAT_MIN_INTERVAL so strobing stays
+        below photosensitivity-risk flash rates.
+        """
+        energy = sum(values)
+        window = self._energy_window
+        window.append(energy)
+        if len(window) > BEAT_WINDOW:
+            window.pop(0)
+        if len(window) < 6:
+            return False
+        average = sum(window[:-1]) / (len(window) - 1)
+        if average <= 0:
+            return False
+        if energy < average * BEAT_THRESHOLD:
+            return False
+        if now - self._last_beat < BEAT_MIN_INTERVAL:
+            return False
+        self._last_beat = now
+        return True
 
     def on_mount(self) -> None:
         if not cava_available():
@@ -361,6 +394,8 @@ class CavaVisualizer(Static):
                 self._silent_frames = 0
             else:
                 self._silent_frames += 1
+            if self.on_beat is not None and self._check_beat(values, time.monotonic()):
+                self.app.call_from_thread(self.on_beat)
             self.app.call_from_thread(self.render_frame, values)
 
     def render_frame(self, values) -> None:
@@ -374,6 +409,12 @@ class CavaVisualizer(Static):
         height = self.content_size.height
         if width < 2 or height < 1:
             return
+        title_row = ""
+        if self.overlay_title and height > 4:
+            title = self.overlay_title[: max(width - 2, 0)]
+            pad = max((width - len(title)) // 2, 0)
+            title_row = " " * pad + title
+            height -= 1
         cols = _sample(values, width)
         try:
             markup = self._renderer.render(
@@ -381,6 +422,8 @@ class CavaVisualizer(Static):
             )
         except Exception:
             return  # a bad frame must never take down the app
+        if title_row:
+            markup = f"[bold]{title_row}[/bold]\n{markup}"
         self.update(markup)
 
     def on_unmount(self) -> None:

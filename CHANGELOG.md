@@ -4,6 +4,15 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.3.0] — 2026-07-05
+
+### Added
+- 🕺 Rave mode (shift+R): off → pulse → takeover. Pulse strobes the whole
+  app to a random palette on every detected beat (cava energy spikes,
+  capped at 4 flashes/sec); takeover hides everything but the visualizer
+  for a fullscreen VJ screen with the track name overlaid. Escape exits;
+  your saved palette is restored.
+
 ## [0.2.2] — 2026-07-04
 
 ### Added

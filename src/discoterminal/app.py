@@ -2,6 +2,7 @@
 
 import io
 import json
+import random
 import re
 import urllib.request
 
@@ -210,6 +211,14 @@ class DiscoTerminal(App):
         margin: 0 1;
         content-align: center middle;
     }
+    DiscoTerminal.rave-takeover #sidebar,
+    DiscoTerminal.rave-takeover #now-playing-row,
+    DiscoTerminal.rave-takeover #progress-row,
+    DiscoTerminal.rave-takeover #controls,
+    DiscoTerminal.rave-takeover #search,
+    DiscoTerminal.rave-takeover Footer {
+        display: none;
+    }
     """
 
     BINDINGS = [
@@ -217,6 +226,7 @@ class DiscoTerminal(App):
         Binding("n", "next", "Next"),
         Binding("p", "prev", "Prev"),
         Binding("r", "replay", "Replay", show=False),
+        Binding("R", "rave", "🕺 Rave"),
         Binding("plus,equals_sign", "vol_up", "Vol +"),
         Binding("minus", "vol_down", "Vol -"),
         Binding("s", "shuffle", "Shuffle", show=False),
@@ -264,6 +274,8 @@ class DiscoTerminal(App):
         self._track_art = None  # PIL image of current track's cover
         self._artist_cache = {}  # artist id -> (info dict, PIL image)
         self._context_names = {}  # context uri -> display label cache
+        self.rave_mode = "off"  # "off" | "pulse" | "takeover"
+        self._pre_rave_palette = None  # restored when rave ends
         self.context_label = None  # "name (playlist)" for the card
         self.shuffle_on = None  # True/False/None(unknown)
         self.repeat_state = None  # "off" | "context" | "track" | None
@@ -304,7 +316,9 @@ class DiscoTerminal(App):
     def on_mount(self) -> None:
         for name, colors in PALETTES.items():
             self.register_theme(_palette_theme(name, colors))
-        self.apply_palette(self.query_one("#viz", CavaVisualizer).palette_name)
+        viz = self.query_one("#viz", CavaVisualizer)
+        viz.on_beat = self.on_rave_beat
+        self.apply_palette(viz.palette_name)
 
         # First run: Web API backend selected but no credentials — show
         # the setup checklist instead of polling into "unreachable".
@@ -880,14 +894,56 @@ class DiscoTerminal(App):
 
         self.push_screen(PickerScreen(title, options), handle)
 
-    def apply_palette(self, name) -> None:
+    def apply_palette(self, name, refresh=True) -> None:
         """Retheme the whole app to match a visualizer palette."""
         if name not in PALETTES:
             name = "aurora"
         self.palette_name = name
         self.theme = f"viz-{name}"
-        if self.is_running:
+        viz = self.query_one("#viz", CavaVisualizer)
+        viz.palette_name = name  # follow the theme, without persisting
+        if refresh and self.is_running:
             self.refresh_status()  # repaint panel text in the new colors now
+
+    # ---- rave mode ---------------------------------------------------------
+
+    def action_rave(self) -> None:
+        """Cycle rave mode: off -> pulse (beat strobes) -> takeover -> off."""
+        if self.rave_mode == "off":
+            self.rave_mode = "pulse"
+            self._pre_rave_palette = self.palette_name
+            self.notify("🕺 Rave: pulse — palettes strobe on the beat (R again: takeover)")
+        elif self.rave_mode == "pulse":
+            self.rave_mode = "takeover"
+            self.add_class("rave-takeover")
+            self._update_rave_title()
+            self.notify("🕺 Rave: TAKEOVER (R or Escape exits)", timeout=4)
+        else:
+            self._exit_rave()
+
+    def _exit_rave(self) -> None:
+        self.rave_mode = "off"
+        self.remove_class("rave-takeover")
+        viz = self.query_one("#viz", CavaVisualizer)
+        viz.overlay_title = None
+        if self._pre_rave_palette:
+            self.apply_palette(self._pre_rave_palette)
+            self._pre_rave_palette = None
+        self.notify("Rave over 🪩")
+
+    def _update_rave_title(self) -> None:
+        viz = self.query_one("#viz", CavaVisualizer)
+        artist, track = self.track_key or (None, None)
+        viz.overlay_title = f"♪ {artist} — {track} ♪" if artist and track else None
+
+    def on_rave_beat(self) -> None:
+        """Called from the viz frame reader on each detected beat."""
+        if self.rave_mode == "off":
+            return
+        choices = [n for n in PALETTES if n != self.palette_name]
+        self.apply_palette(random.choice(choices), refresh=False)
+        if self.rave_mode == "takeover":
+            self._update_rave_title()
 
     def play_uri(self, uri) -> None:
         if uri == webapi.LIKED_URI:
@@ -1002,6 +1058,9 @@ class DiscoTerminal(App):
         self.query_one("#search", Input).focus()
 
     def action_blur_search(self) -> None:
+        if self.rave_mode == "takeover":
+            self._exit_rave()
+            return
         self.set_focus(None)
 
     # ---- events -----------------------------------------------------------

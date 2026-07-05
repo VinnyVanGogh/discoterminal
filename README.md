@@ -93,6 +93,7 @@ and is the universal control fallback. Override backend selection with
 - 🎤 **Lyrics** via [lrclib.net] (no API key)
 - ♥ **Like/unlike** the current track, ⏭ **queue viewer**, 📱 **device
   switcher**
+- 🕺 **Rave mode** — beat-detected palette strobes across the whole app, or a fullscreen VJ takeover (flash rate capped at 4/sec)
 - ⌨️ Everything keyboard-driven; playback via Web API so the Spotify app
   never steals focus
 
@@ -200,6 +201,7 @@ config.json.
 | `shift+V` | Visualizer style picker |
 | `c` | Color palette / theme picker |
 | click progress bar | Seek |
+| `shift+R` | 🕺 Rave mode: beat-strobing palettes → fullscreen VJ takeover |
 | `q` | Quit |
 
 Startup arguments: `discoterminal next`, `discoterminal <playlist name>`, `discoterminal play
