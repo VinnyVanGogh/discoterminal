@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.2.1] — 2026-07-04
+
+### Changed
+- Rain visualizer floor bars now scale to ~1/3 of the visualizer height
+  (was a fixed 2 rows — a sliver on tall terminals)
+
 ## [0.2.0] — 2026-07-04
 
 ### Added

@@ -257,10 +257,10 @@ class SpectrumRenderer:
         return rows
 
     def _style_rain(self, cols, height):
-        """Droplets spawned by loud columns fall to a 2-row floor."""
+        """Droplets fall onto a spectrum floor (~1/3 of the height)."""
         import random
 
-        floor_rows = min(2, height)
+        floor_rows = min(max(2, height // 3), height)
         sky = height - floor_rows
         levels = self._levels(cols, height)
 
