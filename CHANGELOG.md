@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org).
 
+## [0.2.2] — 2026-07-04
+
+### Added
+- ♥ Liked Songs pinned at the top of the sidebar — browse and play your
+  saved tracks like any playlist (queues the first 100; the Web API has
+  no playable context for the collection)
+
 ## [0.2.1] — 2026-07-04
 
 ### Changed

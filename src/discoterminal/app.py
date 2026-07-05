@@ -576,7 +576,10 @@ class DiscoTerminal(App):
     # ---- rendering --------------------------------------------------------
 
     def populate_sidebar(self, loaded, source, error) -> None:
-        self.playlist_entries = list(loaded.items())
+        # Liked Songs pinned first — technically not a playlist, but it is
+        # to the person using this.
+        self.playlist_entries = [("♥ Liked Songs", webapi.LIKED_URI)]
+        self.playlist_entries += list(loaded.items())
         try:
             list_view = self.query_one("#playlist-list", ListView)
         except NoMatches:
@@ -584,12 +587,16 @@ class DiscoTerminal(App):
         list_view.clear()
         for i, (name, _uri) in enumerate(self.playlist_entries):
             list_view.append(ListItem(Label(name, markup=False), id=f"pl-{i}"))
+            if i == 0:
+                list_view.append(
+                    ListItem(Label("─" * 24), id="pl-divider", disabled=True)
+                )
 
         title = self.query_one("#sidebar-title", Static)
         if source == "spotify":
-            title.update(f"Playlists ({len(self.playlist_entries)})")
+            title.update(f"Playlists ({len(loaded)})")
         else:
-            title.update(f"Playlists (local, {len(self.playlist_entries)})")
+            title.update(f"Playlists (local, {len(loaded)})")
             self.notify(
                 f"Using local playlist fallback: {error}",
                 severity="warning",
@@ -603,7 +610,7 @@ class DiscoTerminal(App):
     def play_playlist_by_name(self, name) -> None:
         wanted = name.lower()
         for entry_name, uri in self.playlist_entries:
-            if entry_name.lower() == wanted:
+            if entry_name.lower() in (wanted, f"♥ {wanted}"):
                 self.play_uri(uri)
                 self.notify(f"Playing playlist: {entry_name}")
                 return
@@ -883,7 +890,10 @@ class DiscoTerminal(App):
             self.refresh_status()  # repaint panel text in the new colors now
 
     def play_uri(self, uri) -> None:
-        self._play_uri_worker(uri)
+        if uri == webapi.LIKED_URI:
+            self.play_liked_worker()
+        else:
+            self._play_uri_worker(uri)
 
     @work(thread=True, group="commands")
     def _play_uri_worker(self, uri) -> None:
@@ -1032,23 +1042,33 @@ class DiscoTerminal(App):
     @work(thread=True, exclusive=True, group="playlist-tracks")
     def open_playlist(self, name, uri) -> None:
         """Modal: play the whole playlist, or pick one track (in context)."""
+        liked = uri == webapi.LIKED_URI
         try:
-            tracks = webapi.playlist_tracks(uri)
+            tracks = webapi.saved_tracks() if liked else webapi.playlist_tracks(uri)
         except Exception:
             tracks = []  # no API? fall back to a play-only option
-        options: list[tuple[str, tuple[str, ...]]] = [
-            ("▶ Play whole playlist (shuffle as-is)", ("all", uri))
-        ]
+        all_label = "▶ Play all liked songs" if liked else "▶ Play whole playlist"
+        options: list[tuple[str, tuple[str, ...]]] = [(all_label, ("all", uri))]
         options += [(t["label"], ("track", uri, t["uri"])) for t in tracks]
 
         def on_pick(choice):
             if choice[0] == "all":
                 self.play_uri(choice[1])
-                self.notify(f"Playing playlist: {name}")
+                self.notify(f"Playing: {name}")
+            elif liked:
+                self.play_liked_worker(choice[2])
             else:
                 self.play_track_in_context(choice[1], choice[2])
 
         self.call_from_thread(self.show_picker, f"📻 {name}", options, on_pick)
+
+    @work(thread=True, group="commands")
+    def play_liked_worker(self, track_uri=None) -> None:
+        try:
+            webapi.play_liked(track_uri)
+        except Exception as e:
+            self.call_from_thread(self.notify, str(e), severity="error")
+        self.call_from_thread(self.refresh_status)
 
     @work(thread=True, group="commands")
     def play_track_in_context(self, context_uri, track_uri) -> None:

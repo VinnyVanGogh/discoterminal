@@ -195,6 +195,43 @@ def playlist_tracks(uri: str, limit: int = 100) -> list[dict[str, str]]:
     return tracks
 
 
+LIKED_URI = "discoterminal:liked"  # sentinel — Liked Songs has no real URI
+
+
+def saved_tracks(limit: int = 100) -> list[dict[str, str]]:
+    """The user's Liked Songs (newest first): [{'label', 'uri'}]."""
+    sp = get_client()
+    tracks: list[dict[str, str]] = []
+    offset = 0
+    while len(tracks) < limit:
+        page = sp.current_user_saved_tracks(limit=50, offset=offset)
+        items = (page or {}).get("items") or []
+        if not items:
+            break
+        for entry in items:
+            track = (entry or {}).get("track") or {}
+            if not track.get("uri"):
+                continue
+            artists = ", ".join(a["name"] for a in track.get("artists") or [])
+            tracks.append(
+                {"label": f"🎵 {track.get('name')} — {artists}", "uri": track["uri"]}
+            )
+        offset += 50
+    return tracks[:limit]
+
+
+def play_liked(track_uri: str | None = None, limit: int = 100) -> None:
+    """Play Liked Songs — the API has no context URI for the collection,
+    so we queue the track list directly (first `limit` tracks)."""
+    uris = [t["uri"] for t in saved_tracks(limit)]
+    if not uris:
+        raise RuntimeError("No liked songs found")
+    if track_uri and track_uri in uris:
+        get_client().start_playback(uris=uris, offset={"uri": track_uri})
+    else:
+        get_client().start_playback(uris=uris)
+
+
 def play_in_context(context_uri: str, track_uri: str) -> None:
     """Play a specific track inside its playlist/album context."""
     get_client().start_playback(context_uri=context_uri, offset={"uri": track_uri})

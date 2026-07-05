@@ -44,6 +44,14 @@ def calls(monkeypatch):
         lambda c, t: recorded.append(("api-play-in-context", c, t)),
     )
     monkeypatch.setattr(webapi, "playlist_name", lambda uri: "Chill")
+    monkeypatch.setattr(
+        webapi, "saved_tracks",
+        lambda limit=100: [{"label": "🎵 Fave — NF", "uri": "spotify:track:fave"}],
+    )
+    monkeypatch.setattr(
+        webapi, "play_liked",
+        lambda track_uri=None, limit=100: recorded.append(("api-play-liked", track_uri)),
+    )
     monkeypatch.setattr(webapi, "is_saved", lambda tid: True)
     monkeypatch.setattr(webapi, "current_playback", lambda: {"progress_ms": 60000})
     monkeypatch.setattr(webapi, "play", lambda uri: recorded.append(("api-play", uri)))

@@ -35,7 +35,8 @@ async def test_playlist_selection_opens_track_browser(calls):
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.8)
         app.query_one("#playlist-list", ListView).focus()
-        await pilot.press("down")
+        await pilot.press("down")  # ♥ Liked Songs (pinned first)
+        await pilot.press("down")  # first real playlist (divider is skipped)
         await pilot.press("enter")
         await pilot.pause(0.5)
         assert isinstance(app.screen, PickerScreen)
@@ -50,6 +51,7 @@ async def test_playlist_track_plays_in_context(calls):
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.8)
         app.query_one("#playlist-list", ListView).focus()
+        await pilot.press("down")
         await pilot.press("down")
         await pilot.press("enter")
         await pilot.pause(0.5)
@@ -156,3 +158,32 @@ async def test_narrow_terminal_hides_sidebar(calls):
         assert app.has_class("narrow")
     # case-insensitive playlist startup arg resolved after sidebar load
     assert ("api-play", "spotify:playlist:x") in calls
+
+
+async def test_liked_songs_pinned_and_playable(calls):
+    app = DiscoTerminal()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.8)
+        assert app.playlist_entries[0] == ("♥ Liked Songs", "discoterminal:liked")
+        app.query_one("#playlist-list", ListView).focus()
+        await pilot.press("down")  # highlight Liked Songs
+        await pilot.press("enter")
+        await pilot.pause(0.5)
+        assert isinstance(app.screen, PickerScreen)
+        await pilot.press("enter")  # ▶ Play all liked songs
+        await pilot.pause(0.5)
+    assert ("api-play-liked", None) in calls
+
+
+async def test_liked_song_pick_plays_from_that_track(calls):
+    app = DiscoTerminal()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.8)
+        app.query_one("#playlist-list", ListView).focus()
+        await pilot.press("down")
+        await pilot.press("enter")
+        await pilot.pause(0.5)
+        await pilot.press("down")  # first liked track
+        await pilot.press("enter")
+        await pilot.pause(0.5)
+    assert ("api-play-liked", "spotify:track:fave") in calls
