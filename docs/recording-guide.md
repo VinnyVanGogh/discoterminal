@@ -27,26 +27,40 @@ from there.
 - [ ] **Pace**: pause ~1 s between keypresses so viewers can follow.
   Prefer keys over mouse — footer highlights show what you pressed.
 
-## Shot list — name files by number
+## Shot list — name files by number, tick as you go
 
-| # | File | Final name | What to capture |
-|---|------|-----------|-----------------|
-| **1** | `1.png` | now-playing.png *(hero)* | Full app, track playing **from a playlist** (so "📻 Playing from:" shows), viz mid-dance, art visible. The money still. |
-| **2** | `2.mp4` | visualizer-colors.gif | Press `c` → arrow through 2–3 palettes, Enter on one. Whole app rethemes each time. |
-| **3** | `3.mp4` | visualizer-styles.gif | `shift+V` → pick `rain` → `shift+V` → `led` → `shift+V` → `peaks`. |
-| **4** | `4.mp4` | artist-song-lyrics-card.gif | `y` for lyrics, let the highlight advance 2–3 lines, then `i` for artist card, then `i` back. |
-| **5** | `5.mp4` | search-feature.gif | `/` → type an artist → Enter → results modal → pick a track. |
-| **6** | `6.mp4` | playlist-function.gif | Click/Enter a playlist → **track browser modal** (new!) → pick a track mid-list. |
-| **7** | `7.png` | liked-songs.png *(new)* | Select **♥ Liked Songs** at the top of the sidebar, screenshot the open modal. |
-| **8** | `8.mp4` | playback-controls.gif | `space` pause → `space` play → `n` next → **click the progress bar** to seek. |
-| **9** | `9.png` | artist-info.png | Artist card still (`i`) — genres/followers/top tracks visible. |
-| **10** | `10.png` | lyrics.png | Lyrics card still (`y`) with a line highlighted. |
-| **11** | `11.png` | color-options-card.png | `c` picker open (shows the color swatches). |
-| **12** | `12.png` | visualizer-styles-card.png | `shift+V` picker open. |
-| **13** | `13.png` | queue-card.png | `u` queue modal open. |
-| **14** | `14.png` | collapsed-visualizer-and-playlists.png | `b` (sidebar hidden) + `v` (viz hidden) — the minimal layout. |
-| **15** | `15.mp4` | visualizer-on-5-secs.gif | `v` off → `v` on, viz reacting. |
-| **16** | `16.mp4` | rave-mode.gif *(new, 10–15 s)* | `shift+R` (pulse — let 3–4 beats strobe) → `shift+R` (kaleido TAKEOVER — let a drop hit) → `Escape`. Record during the loudest part of the track. |
+- [ ] **1** — `1.png` → now-playing.png *(hero)*
+  Full app, track playing **from a playlist** (so "📻 Playing from:" shows), viz mid-dance, art visible. The money still.
+- [ ] **2** — `2.mp4` → visualizer-colors.gif
+  Press `c` → arrow through 2–3 palettes, Enter on one. Whole app rethemes each time.
+- [ ] **3** — `3.mp4` → visualizer-styles.gif
+  `shift+V` → pick `rain` → `shift+V` → `led` → `shift+V` → `peaks`.
+- [ ] **4** — `4.mp4` → artist-song-lyrics-card.gif
+  `y` for lyrics, let the highlight advance 2–3 lines, then `i` for artist card, then `i` back.
+- [ ] **5** — `5.mp4` → search-feature.gif
+  `/` → type an artist → Enter → results modal → pick a track.
+- [ ] **6** — `6.mp4` → playlist-function.gif
+  Click/Enter a playlist → **track browser modal** (new!) → pick a track mid-list.
+- [ ] **7** — `7.png` → liked-songs.png *(new)*
+  Select **♥ Liked Songs** at the top of the sidebar, screenshot the open modal.
+- [ ] **8** — `8.mp4` → playback-controls.gif
+  `space` pause → `space` play → `n` next → **click the progress bar** to seek.
+- [ ] **9** — `9.png` → artist-info.png
+  Artist card still (`i`) — genres/followers/top tracks visible.
+- [ ] **10** — `10.png` → lyrics.png
+  Lyrics card still (`y`) with a line highlighted.
+- [ ] **11** — `11.png` → color-options-card.png
+  `c` picker open (shows the color swatches).
+- [ ] **12** — `12.png` → visualizer-styles-card.png
+  `shift+V` picker open.
+- [ ] **13** — `13.png` → queue-card.png
+  `u` queue modal open.
+- [ ] **14** — `14.png` → collapsed-visualizer-and-playlists.png
+  `b` (sidebar hidden) + `v` (viz hidden) — the minimal layout.
+- [ ] **15** — `15.mp4` → visualizer-on-5-secs.gif
+  `v` off → `v` on, viz reacting.
+- [ ] **16** — `16.mp4` → rave-mode.gif *(new, 10–15 s)*
+  `shift+R` (pulse — let 3–4 beats strobe) → `shift+R` (kaleido TAKEOVER — let a drop hit) → `Escape`. Record during the loudest part of the track.
 
 ## Handoff
 
@@ -62,6 +76,6 @@ current media.
 
 ## Bonus (optional)
 
-- **17** `17.mp4` — vertical rave for Instagram: resize kitty tall
+- [ ] **17** — `17.mp4` — vertical rave for Instagram: resize kitty tall
   (~95 × 55), takeover mode, 10 s. Won't go in the README; gets the
   blurred-background 1080×1920 treatment for stories.
