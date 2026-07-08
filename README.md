@@ -21,6 +21,11 @@ pipx install discoterminal
 
 ## See it move
 
+**🕺 Rave mode** (`shift+R`) — beat-detected palette strobes, then a
+fullscreen kaleido takeover that slams on every kick:
+
+![Rave mode — beat-reactive takeover](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/rave-mode.gif)
+
 Pick a palette and the whole app rethemes — visualizer, borders, buttons, labels:
 
 ![Switching color palettes live](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/visualizer-colors.gif)
@@ -56,6 +61,7 @@ now-playing, artist info, and lyrics:
 | ![Artist info card](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/artist-info.png) | ![Lyrics card](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/lyrics.png) |
 | ![Color palette picker](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/color-options-card.png) | ![Visualizer style picker](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/visualizer-styles-card.png) |
 | ![Queue viewer](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/queue-card.png) | ![Collapsed sidebar & visualizer](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/collapsed-visualizer-and-playlists.png) |
+| ![♥ Liked Songs browser](https://raw.githubusercontent.com/VinnyVanGogh/discoterminal/main/docs/media/liked-songs.png) | |
 
 ### Visualizer on / off
 
